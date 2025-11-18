@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:8000/api';
+// Auto-detect API URL - works for both localhost and production
+const API_BASE_URL = window.location.origin + '/api';
 
 let currentEvents = [];
 let currentAttendees = [];
