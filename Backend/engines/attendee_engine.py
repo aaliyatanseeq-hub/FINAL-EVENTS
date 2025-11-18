@@ -32,7 +32,10 @@ class SmartAttendeeEngine:
     def __init__(self):
         self.twitter_client = TwitterClient()
         self.relevance_threshold = 0.05  # VERY LOW to catch maximum attendees
-        print(f"🔧 Attendee Engine: {'✅ Twitter Ready' if self.twitter_client.is_operational() else '❌ No Auth'}")
+        try:
+            print(f"🔧 Attendee Engine: {'✅ Twitter Ready' if self.twitter_client.is_operational() else '❌ No Auth'}")
+        except UnicodeEncodeError:
+            print(f"Attendee Engine: {'Twitter Ready' if self.twitter_client.is_operational() else 'No Auth'}")
 
     def discover_attendees(self, event_name: str, event_date: Optional[str], max_results: int) -> List[ResearchAttendee]:
         """GUARANTEES exactly max_results attendees with MAX 10 searches"""

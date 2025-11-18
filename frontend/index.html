@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event Intelligence Platform</title>
-    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="/static/styles/main.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -61,6 +61,48 @@
                     <div class="input-group">
                         <label for="maxEvents"><i class="fas fa-chart-line"></i> Max Events</label>
                         <input type="number" id="maxEvents" min="1" max="100" value="10">
+                    </div>
+                </div>
+
+                <div class="categories-section">
+                    <label><i class="fas fa-tags"></i> Event Categories</label>
+                    <div class="categories-grid">
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="music" checked>
+                            <span class="checkmark">🎵 Music</span>
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="sports" checked>
+                            <span class="checkmark">⚽ Sports</span>
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="food" checked>
+                            <span class="checkmark">🍕 Food</span>
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="arts" checked>
+                            <span class="checkmark">🎨 Arts</span>
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="business">
+                            <span class="checkmark">💼 Business</span>
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="conference">
+                            <span class="checkmark">🏛️ Conference</span>
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="festival">
+                            <span class="checkmark">🎪 Festival</span>
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="comedy">
+                            <span class="checkmark">🎭 Comedy</span>
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="family">
+                            <span class="checkmark">👨‍👩‍👧‍👦 Family</span>
+                        </label>
                     </div>
                 </div>
 
@@ -235,6 +277,6 @@
         </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <script src="/static/js/app.js"></script>
 </body>
 </html>

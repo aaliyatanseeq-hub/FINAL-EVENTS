@@ -1,4 +1,36 @@
-echo .venv/ > .gitignore
-echo __pycache__/ >> .gitignore
-echo *.pyc >> .gitignore
-echo .env >> .gitignore
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Project specific
+*.pyc
+__pycache__/

@@ -6,11 +6,14 @@ FIXED: Uses OAuth 1.1 for all Twitter actions (comments, retweets, likes)
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
 import re
 import time
+import os
+from pathlib import Path
 from engines.event_engine import SmartEventEngine
 from engines.attendee_engine import SmartAttendeeEngine
 from services.twitter_client import TwitterClient
@@ -55,22 +58,13 @@ class CommentRequest(BaseModel):
     comment_template: Optional[str] = None
     hashtags: Optional[str] = None
 
-@app.get("/")
-async def root():
-    return {
-        "message": "🎪 Event Intelligence Platform",
-        "status": "ready", 
-        "version": "2.0.1",
-        "policy": "FIXED - OAuth 1.1 for all Twitter actions"
-    }
-
 @app.get("/api/health")
 async def health_check():
     twitter_client = TwitterClient()
     return {
         "status": "healthy",
         "twitter_search_ready": twitter_client.is_operational(),
-        "twitter_actions_ready": twitter_client.api is not None,
+        "twitter_actions_ready": twitter_client.api_v1 is not None,
         "features": ["event_discovery", "attendee_discovery", "twitter_actions"]
     }
 
@@ -84,9 +78,9 @@ async def auth_status():
     # Test OAuth 1.1
     oauth1_working = False
     oauth1_user = None
-    if twitter_client.api:
+    if twitter_client.api_v1:
         try:
-            user = twitter_client.api.verify_credentials()
+            user = twitter_client.api_v1.verify_credentials()
             oauth1_working = True
             oauth1_user = user.screen_name
         except Exception as e:
@@ -401,7 +395,7 @@ async def post_quote_tweets(request: TwitterActionRequest):
         
         twitter_client = TwitterClient()
         
-        if not twitter_client.api:
+        if not twitter_client.api_v1:
             return {
                 "success": False,
                 "error": "Twitter OAuth 1.1 not configured for quote tweets"
@@ -442,7 +436,7 @@ async def post_quote_tweets(request: TwitterActionRequest):
                 print(f"   🔁 Creating quote tweet for {username}'s tweet: {tweet_id}")
                 
                 # For OAuth 1.1, we use retweet with comment (quote tweet)
-                tweet = twitter_client.api.update_status(
+                tweet = twitter_client.api_v1.update_status(
                     status=quote_text
                 )
                 
@@ -490,7 +484,7 @@ async def test_single_comment():
         
         twitter_client = TwitterClient()
         
-        if not twitter_client.api:
+        if not twitter_client.api_v1:
             return {"success": False, "error": "OAuth 1.1 not available"}
         
         # Test with a known tweet ID
@@ -500,7 +494,7 @@ async def test_single_comment():
         
         print(f"🧪 Testing comment on tweet: {test_tweet_id}")
         
-        tweet = twitter_client.api.update_status(
+        tweet = twitter_client.api_v1.update_status(
             status=comment_text,
             in_reply_to_status_id=test_tweet_id,
             auto_populate_reply_metadata=True
@@ -539,7 +533,27 @@ def extract_tweet_id(post_link: str) -> Optional[str]:
         return None
 
 # Serve frontend
-app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
+# -----------------------------
+# FRONTEND SETUP (FIXED)
+# -----------------------------
+
+# Get the frontend directory path (parent directory from Backend)
+# Use __file__ to get the absolute path of this file, then go up one level
+try:
+    BASE_DIR = Path(__file__).resolve().parent.parent
+except NameError:
+    # Fallback if __file__ is not available
+    BASE_DIR = Path.cwd().parent
+FRONTEND_DIR = BASE_DIR / "frontend"
+
+# 1) Serve static files (CSS, JS, images)
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+ 
+# 2) Serve index.html for root
+@app.get("/")
+async def serve_frontend():
+    index_path = FRONTEND_DIR / "index.html"
+    return FileResponse(str(index_path))
 
 if __name__ == "__main__":
     print("🚀 Event Intelligence Platform Starting...")

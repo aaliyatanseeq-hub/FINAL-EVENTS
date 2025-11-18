@@ -30,7 +30,10 @@ class ResearchEvent:
 class SmartEventEngine:
     def __init__(self):
         self.serp_api_key = os.getenv('SERP_API_KEY')
-        print(f"🔧 Event Engine: {'✅ SerpAPI Ready' if self.serp_api_key else '❌ No Key'}")
+        try:
+            print(f"🔧 Event Engine: {'✅ SerpAPI Ready' if self.serp_api_key else '❌ No Key'}")
+        except UnicodeEncodeError:
+            print(f"Event Engine: {'SerpAPI Ready' if self.serp_api_key else 'No Key'}")
 
     def discover_events(self, location: str, start_date: str, end_date: str, categories: List[str], max_results: int) -> List[ResearchEvent]:
         """PROPER DATE RANGE FILTERING: Return events within exact date range"""
