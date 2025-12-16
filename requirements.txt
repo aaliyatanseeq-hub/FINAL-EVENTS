@@ -1,9 +1,37 @@
-fastapi
-uvicorn[standard]
-python-dotenv
-requests
-tweepy
-pydantic
-aiohttp
-beautifulsoup4
-python-multipart
+# Core
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-dotenv==1.0.0
+pydantic==2.5.0
+
+# APIs & Clients
+tweepy==4.14.0
+requests==2.31.0
+praw==7.7.1
+prawcore==2.4.0
+
+# Async & Performance
+aiohttp==3.9.1
+httpx==0.25.1
+concurrent-log-handler==0.9.24
+
+# Data Processing
+beautifulsoup4==4.12.2
+lxml==4.9.3
+html5lib==1.1
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3.post1
+tenacity==8.2.3
+cachetools==5.3.2
+
+# Monitoring & Logging
+structlog==23.2.0
+loguru==0.7.2
+
+# Development
+black==23.11.0
+flake8==6.1.0
+pytest==7.4.3
+pytest-asyncio==0.21.1
