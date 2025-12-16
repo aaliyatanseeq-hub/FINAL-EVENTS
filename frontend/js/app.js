@@ -1,5 +1,5 @@
 // Auto-detect API URL - works for both localhost and production
-const API_BASE_URL = window.location.origin + '/api';
+const API_BASE_URL = 'http://localhost:8000/api';  // Explicit backend URL
 
 let currentEvents = [];
 let currentAttendees = [];
@@ -10,6 +10,19 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeDates();
     setupEventListeners();
 });
+
+function setupNavbarScroll() {
+    const navbar = document.getElementById('navbar');
+    if (!navbar) return;
+    
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    });
+}
 
 function initializeDates() {
     const today = new Date();
@@ -112,21 +125,34 @@ function displayEvents(events, metadata) {
     const tableBody = document.getElementById('eventsTableBody');
     const statsElement = document.getElementById('eventsStats');
     
+    // Add source to stats
+    const sourceCounts = {};
+    events.forEach(event => {
+        const source = event.source || 'unknown';
+        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+    });
+    
+    let sourceStats = '';
+    for (const [source, count] of Object.entries(sourceCounts)) {
+        sourceStats += `<span class="source-stat ${getSourceClass(source)}">${source}: ${count}</span>`;
+    }
+    
     statsElement.innerHTML = `
         <span>Found: ${metadata.total_events || 0}</span>
         <span>Limit: ${metadata.requested_limit || 0}</span>
+        ${sourceStats}
     `;
     
     tableBody.innerHTML = '';
     
     if (events.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No events found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No events found</td></tr>';
     } else {
         events.forEach((event, index) => {
             const confidencePercent = Math.round((event.confidence_score || 0.5) * 100);
             const confidenceClass = getConfidenceClass(confidencePercent);
-            const hypePercent = Math.round((event.hype_score || 0) * 100);
-            const hypeClass = getHypeClass(hypePercent);
+            const source = event.source || 'unknown';
+            const sourceClass = getSourceClass(source);
             
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -134,6 +160,7 @@ function displayEvents(events, metadata) {
                 <td>${event.exact_date || 'Date not specified'}</td>
                 <td>${event.exact_venue || event.location || 'Venue not specified'}</td>
                 <td><span class="engagement-badge">${event.category || 'other'}</span></td>
+                <td><span class="source-badge ${sourceClass}">${source}</span></td>
                 <td><span class="${confidenceClass}">${confidencePercent}%</span></td>
                 <td>
                     <button class="btn-secondary" onclick="analyzeAttendees('${(event.event_name || '').replace(/'/g, "\\'")}')">
@@ -219,9 +246,22 @@ function displayAttendees(attendees, metadata) {
     const tableBody = document.getElementById('attendeesTableBody');
     const statsElement = document.getElementById('attendeesStats');
     
+    // Add source to stats
+    const sourceCounts = {};
+    attendees.forEach(attendee => {
+        const source = attendee.source || 'unknown';
+        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+    });
+    
+    let sourceStats = '';
+    for (const [source, count] of Object.entries(sourceCounts)) {
+        sourceStats += `<span class="source-stat ${getSourceClass(source)}">${source}: ${count}</span>`;
+    }
+    
     statsElement.innerHTML = `
         <span>Found: ${metadata.total_attendees || 0}</span>
         <span>Limit: ${metadata.requested_limit || 0}</span>
+        ${sourceStats}
     `;
     
     tableBody.innerHTML = '';
@@ -229,12 +269,12 @@ function displayAttendees(attendees, metadata) {
     updateSelectionUI();
     
     if (attendees.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No attendees found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem;">No attendees found</td></tr>';
     } else {
         attendees.forEach(attendee => {
-            const confidencePercent = Math.round((attendee.confidence_score || 0) * 100);
-            const confidenceClass = getConfidenceClass(confidencePercent);
             const engagementClass = getEngagementClass(attendee.engagement_type);
+            const source = attendee.source || 'unknown';
+            const sourceClass = getSourceClass(source);
             
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -245,6 +285,7 @@ function displayAttendees(attendees, metadata) {
                     <strong>${attendee.username || '@unknown'}</strong>
                     ${attendee.verified ? ' <i class="fas fa-badge-check" style="color: #1d9bf0;"></i>' : ''}
                 </td>
+                <td><span class="source-badge ${sourceClass}">${source}</span></td>
                 <td><span class="engagement-badge ${engagementClass}">${attendee.engagement_type || 'mention'}</span></td>
                 <td title="${attendee.post_content || 'No content'}">
                     ${(attendee.post_content || 'No content').length > 60 ? 
@@ -252,8 +293,8 @@ function displayAttendees(attendees, metadata) {
                       (attendee.post_content || 'No content')}
                 </td>
                 <td>${attendee.post_date || 'Unknown date'}</td>
+                <td>${attendee.location || 'N/A'}</td>
                 <td>${(attendee.followers_count || 0).toLocaleString()}</td>
-                <td><span class="${confidenceClass}">${confidencePercent}%</span></td>
                 <td>
                     <a href="${attendee.post_link || '#'}" target="_blank" class="btn-secondary">
                         <i class="fas fa-external-link-alt"></i>
@@ -338,7 +379,7 @@ function updateNotificationTable() {
     if (notificationUsers.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="5" style="text-align: center; padding: 2rem; color: #666;">
+                <td colspan="6" style="text-align: center; padding: 2rem; color: #666;">
                     No users selected yet. Go to Attendees phase and select users to notify.
                 </td>
             </tr>
@@ -347,6 +388,8 @@ function updateNotificationTable() {
         tableBody.innerHTML = '';
         notificationUsers.forEach(user => {
             const engagementClass = getEngagementClass(user.engagement_type);
+            const source = user.source || 'unknown';
+            const sourceClass = getSourceClass(source);
             
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -354,6 +397,7 @@ function updateNotificationTable() {
                     <strong>${user.username}</strong>
                     ${user.verified ? ' <i class="fas fa-badge-check" style="color: #1d9bf0;"></i>' : ''}
                 </td>
+                <td><span class="source-badge ${sourceClass}">${source}</span></td>
                 <td>${(user.followers_count || 0).toLocaleString()}</td>
                 <td><span class="engagement-badge ${engagementClass}">${user.engagement_type || 'mention'}</span></td>
                 <td><span class="status-pending">Pending</span></td>
@@ -387,7 +431,15 @@ async function sendNotifications() {
     const action = await showActionSelection();
     if (!action) return;
     
-    showLoading(`Performing ${action} on ${notificationUsers.length} posts...`);
+    // For message action, require message text
+    if (action === 'message') {
+        if (!message) {
+            alert('Please enter a message to send');
+            return;
+        }
+    }
+    
+    showLoading(`Performing ${action} on ${notificationUsers.length} ${action === 'message' ? 'users' : 'posts'}...`);
     
     try {
         let endpoint;
@@ -410,6 +462,10 @@ async function sendNotifications() {
                 endpoint = '/post-quote-tweets';
                 successKey = 'quoted_count';
                 break;
+            case 'message':
+                endpoint = '/send-messages';
+                successKey = 'sent_count';
+                break;
             default:
                 throw new Error('Invalid action');
         }
@@ -418,7 +474,8 @@ async function sendNotifications() {
             attendees: notificationUsers
         };
         
-        if ((action === 'comment' || action === 'quote') && message) {
+        // Add message for comment, quote, and message actions
+        if ((action === 'comment' || action === 'quote' || action === 'message') && message) {
             requestBody.message = message;
         }
         
@@ -436,7 +493,8 @@ async function sendNotifications() {
             // Update UI with actual results
             updateNotificationResults(result, action);
             
-            let successMessage = `✅ Successfully ${action}ed ${result[successKey]} posts!`;
+            let actionVerb = action === 'message' ? 'sent' : action + 'ed';
+            let successMessage = `✅ Successfully ${actionVerb} ${result[successKey]} ${action === 'message' ? 'messages' : 'posts'}!`;
             if (result.failed_count > 0) {
                 successMessage += ` (${result.failed_count} failed)`;
             }
@@ -461,21 +519,22 @@ async function sendNotifications() {
 function showActionSelection() {
     return new Promise((resolve) => {
         const action = prompt(
-            `Choose Twitter action for ${notificationUsers.length} posts:\n\n` +
+            `Choose Twitter action for ${notificationUsers.length} ${notificationUsers.length === 1 ? 'user' : 'users'}:\n\n` +
             `• retweet - Retweet the original posts\n` +
             `• like - Like the original posts\n` +
             `• comment - Comment on the original posts\n` +
-            `• quote - Create quote tweets\n\n` +
+            `• quote - Create quote tweets\n` +
+            `• message - Send direct message (DM)\n\n` +
             `Enter your choice:`,
             'retweet'
         );
         
-        if (action && ['retweet', 'like', 'comment', 'quote'].includes(action.toLowerCase())) {
+        if (action && ['retweet', 'like', 'comment', 'quote', 'message'].includes(action.toLowerCase())) {
             resolve(action.toLowerCase());
         } else if (action === null) {
             resolve(null);
         } else {
-            alert('Please enter: retweet, like, comment, or quote');
+            alert('Please enter: retweet, like, comment, quote, or message');
             resolve(showActionSelection());
         }
     });
@@ -488,13 +547,22 @@ function updateNotificationResults(result, action) {
     rows.forEach((row, index) => {
         if (index < result.results.length) {
             const resultItem = result.results[index];
-            const statusCell = row.cells[3];
+            const statusCell = row.cells[4]; // Status is in the 5th column (index 4)
             
-            if (resultItem.status === 'retweeted' || resultItem.status === 'liked' || 
+            let statusText = '';
+            if (action === 'message') {
+                statusText = resultItem.status === 'sent' ? 'sent' : 'failed';
+            } else if (resultItem.status === 'retweeted' || resultItem.status === 'liked' || 
                 resultItem.status === 'commented' || resultItem.status === 'quoted') {
-                statusCell.innerHTML = `<span class="status-sent">${action}ed</span>`;
+                statusText = action + 'ed';
             } else {
-                statusCell.innerHTML = `<span class="status-pending">Failed</span>`;
+                statusText = 'failed';
+            }
+            
+            if (statusText === 'sent' || statusText.endsWith('ed')) {
+                statusCell.innerHTML = `<span class="status-sent">${statusText}</span>`;
+            } else {
+                statusCell.innerHTML = `<span class="status-pending">${statusText}</span>`;
             }
         }
     });
@@ -527,4 +595,82 @@ function showLoading(text) {
 
 function hideLoading() {
     document.getElementById('loadingModal').classList.add('hidden');
+}
+
+function getSourceClass(source) {
+    const sourceLower = (source || '').toLowerCase();
+    
+    // Event sources
+    if (sourceLower.includes('serp') || sourceLower === 'serpapi') return 'source-simple';
+    if (sourceLower.includes('eventbrite')) return 'source-eventbrite';
+    if (sourceLower.includes('predicthq') || sourceLower === 'phq') return 'source-predicthq';
+    if (sourceLower.includes('ticketmaster')) return 'source-ticketmaster';
+    if (sourceLower.includes('springbee') || sourceLower.includes('scraping')) return 'source-springbee';
+    if (sourceLower.includes('database')) return 'source-database';
+    if (sourceLower.includes('cache')) return 'source-cache';
+    if (sourceLower.includes('api')) return 'source-api';
+    
+    // Attendee sources
+    if (sourceLower.includes('twitter')) return 'source-twitter';
+    if (sourceLower.includes('reddit')) return 'source-reddit';
+    
+    return 'source-unknown';
+}
+
+function formatSourceName(source) {
+    if (!source || source === 'unknown') return 'Unknown';
+    // Capitalize first letter and handle common cases
+    const sourceLower = source.toLowerCase();
+    if (sourceLower === 'serpapi') return 'SerpAPI';
+    if (sourceLower === 'predicthq' || sourceLower === 'phq') return 'PredictHQ';
+    if (sourceLower.includes('eventbrite')) return 'Eventbrite';
+    if (sourceLower.includes('ticketmaster')) return 'Ticketmaster';
+    if (sourceLower.includes('springbee')) return 'SpringBee';
+    // Capitalize first letter
+    return source.charAt(0).toUpperCase() + source.slice(1).toLowerCase();
+}
+
+function getSourceIcon(source) {
+    const sourceLower = (source || '').toLowerCase();
+    
+    // Event source icons
+    if (sourceLower.includes('serp') || sourceLower === 'serpapi') return '🔍';
+    if (sourceLower.includes('eventbrite')) return '🎫';
+    if (sourceLower.includes('predicthq') || sourceLower === 'phq') return '📈';
+    if (sourceLower.includes('ticketmaster')) return '🎟️';
+    if (sourceLower.includes('springbee') || sourceLower.includes('scraping')) return '🐝';
+    if (sourceLower.includes('database')) return '💾';
+    if (sourceLower.includes('cache')) return '⚡';
+    if (sourceLower.includes('api')) return '🌐';
+    
+    // Attendee source icons
+    if (sourceLower.includes('twitter')) return '🐦';
+    if (sourceLower.includes('reddit')) return '📱';
+    
+    return '❓';
+}
+
+function displaySourceBreakdown(items, type) {
+    const sourceCounts = {};
+    items.forEach(item => {
+        const source = item.source || 'unknown';
+        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+    });
+    
+    let breakdown = '<div class="source-breakdown">';
+    for (const [source, count] of Object.entries(sourceCounts)) {
+        const percentage = ((count / items.length) * 100).toFixed(1);
+        const icon = getSourceIcon(source);
+        breakdown += `
+            <div class="source-breakdown-item">
+                <span class="source-breakdown-icon">${icon}</span>
+                <span class="source-breakdown-name">${source}</span>
+                <span class="source-breakdown-count">${count}</span>
+                <span class="source-breakdown-percentage">(${percentage}%)</span>
+            </div>
+        `;
+    }
+    breakdown += '</div>';
+    
+    return breakdown;
 }

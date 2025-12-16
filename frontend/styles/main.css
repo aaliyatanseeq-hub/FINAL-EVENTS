@@ -384,6 +384,87 @@ td {
 .engagement-interested { background: #d97706; color: white; }
 .engagement-mention { background: #6b7280; color: white; }
 
+/* Source Badges */
+.source-badge {
+    padding: 0.3rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    text-align: center;
+    min-width: 80px;
+}
+
+/* Event Source Colors */
+.source-simple {
+    background: #4285f4;
+    color: white;
+}
+
+.source-eventbrite {
+    background: #f05537;
+    color: white;
+}
+
+.source-predicthq {
+    background: #00c853;
+    color: white;
+}
+
+.source-ticketmaster {
+    background: #9c27b0;
+    color: white;
+}
+
+.source-springbee {
+    background: #ff9800;
+    color: white;
+}
+
+.source-database {
+    background: #2196f3;
+    color: white;
+}
+
+.source-cache {
+    background: #9c27b0;
+    color: white;
+}
+
+.source-api {
+    background: #4caf50;
+    color: white;
+}
+
+/* Attendee Source Colors */
+.source-twitter {
+    background: #1DA1F2;
+    color: white;
+}
+
+.source-reddit {
+    background: #FF4500;
+    color: white;
+}
+
+.source-unknown {
+    background: #757575;
+    color: white;
+}
+
+/* Source Stats */
+.source-stat {
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 0.5rem;
+    background: #f0f9ff;
+    border: 1px solid #e0f2fe;
+}
+
 .btn-secondary {
     background: white;
     color: #2d7d32;
@@ -415,11 +496,6 @@ td {
     color: white;
 }
 
-.hype-high { background: #dc2626; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
-.hype-medium { background: #d97706; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
-.hype-low { background: #6b7280; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
-
-/* Selection Actions */
 .selection-actions {
     display: flex;
     justify-content: space-between;
@@ -436,7 +512,6 @@ td {
     color: #2d7d32;
 }
 
-/* Checkboxes in tables */
 .user-checkbox {
     transform: scale(1.2);
     cursor: pointer;
@@ -447,7 +522,6 @@ td {
     cursor: pointer;
 }
 
-/* Notification Status */
 .status-pending {
     background: #f59e0b;
     color: white;
@@ -462,19 +536,6 @@ td {
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
     font-size: 0.8rem;
-}
-
-/* Table column adjustments */
-#attendeesTable th:first-child,
-#attendeesTable td:first-child {
-    width: 50px;
-    text-align: center;
-}
-
-#notificationsTable th:last-child,
-#notificationsTable td:last-child {
-    width: 100px;
-    text-align: center;
 }
 
 /* Responsive */
@@ -530,5 +591,16 @@ td {
     .nav-link {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
+    }
+    
+    .source-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+        min-width: 60px;
+    }
+    
+    .source-stat {
+        display: block;
+        margin: 0.2rem 0;
     }
 }
