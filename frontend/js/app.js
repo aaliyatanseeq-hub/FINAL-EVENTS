@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     setupNavbarScroll();
     initializeLandingPage();
+    setupCustomCursor();
+    setupParallaxBackground();
 });
 
 // Page Navigation Functions
@@ -19,12 +21,22 @@ function goToPlatform() {
     document.getElementById('platformPage').classList.add('active');
     window.scrollTo(0, 0);
     switchPhase('phase1');
+    // Ensure cursor is visible on platform page
+    const cursor = document.getElementById('customCursor');
+    if (cursor) {
+        cursor.classList.add('active');
+    }
 }
 
 function goToLanding() {
     document.getElementById('platformPage').classList.remove('active');
     document.getElementById('landingPage').classList.add('active');
     window.scrollTo(0, 0);
+    // Hide cursor on landing page
+    const cursor = document.getElementById('customCursor');
+    if (cursor) {
+        cursor.classList.remove('active');
+    }
 }
 
 // Landing Page Initialization
@@ -193,6 +205,16 @@ function switchPhase(phase) {
     document.querySelectorAll('.phase-section').forEach(section => section.classList.remove('active'));
     document.getElementById(phase).classList.add('active');
     
+    // Update cursor color based on active phase
+    document.body.classList.remove('phase-1-active', 'phase-2-active', 'phase-3-active');
+    if (phase === 'phase1') {
+        document.body.classList.add('phase-1-active');
+    } else if (phase === 'phase2') {
+        document.body.classList.add('phase-2-active');
+    } else if (phase === 'phase3') {
+        document.body.classList.add('phase-3-active');
+    }
+    
     if (phase === 'phase3') {
         updateNotificationTable();
     }
@@ -255,24 +277,24 @@ async function discoverEvents() {
 function displayEvents(events, metadata) {
     const tableBody = document.getElementById('eventsTableBody');
     const statsElement = document.getElementById('eventsStats');
+    const subtitleElement = document.getElementById('eventsSubtitle');
+    const location = document.getElementById('location').value || 'New York';
+    const maxEvents = document.getElementById('maxEvents').value || 10;
     
-    // Add source to stats
-    const sourceCounts = {};
-    events.forEach(event => {
-        const source = event.source || 'unknown';
-        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
-    });
-    
-    let sourceStats = '';
-    for (const [source, count] of Object.entries(sourceCounts)) {
-        sourceStats += `<span class="source-stat ${getSourceClass(source)}">${source}: ${count}</span>`;
+    // Update subtitle
+    if (subtitleElement) {
+        subtitleElement.textContent = `Showing ${events.length} of ${events.length} events in ${location}`;
     }
     
-    statsElement.innerHTML = `
-        <span>Found: ${metadata.total_events || 0}</span>
-        <span>Limit: ${metadata.requested_limit || 0}</span>
-        ${sourceStats}
-    `;
+    // Update status pills
+    if (statsElement) {
+        statsElement.innerHTML = `
+            <span class="status-pill status-pill-blue">Found: ${events.length}</span>
+            <span class="status-pill status-pill-purple">Limit: ${maxEvents}</span>
+        `;
+    }
+    
+    // Stats are already updated above
     
     tableBody.innerHTML = '';
     
@@ -294,7 +316,7 @@ function displayEvents(events, metadata) {
                 <td><span class="source-badge ${sourceClass}">${source}</span></td>
                 <td><span class="${confidenceClass}">${confidencePercent}%</span></td>
                 <td>
-                    <button class="btn-secondary" onclick="analyzeAttendees('${(event.event_name || '').replace(/'/g, "\\'")}')">
+                    <button class="btn-analyze" onclick="analyzeAttendees('${(event.event_name || '').replace(/'/g, "\\'")}')">
                         <i class="fas fa-users"></i>
                         Analyze
                     </button>
@@ -804,4 +826,71 @@ function displaySourceBreakdown(items, type) {
     breakdown += '</div>';
     
     return breakdown;
+}
+
+// Custom Cursor - Follows Mouse Movement
+function setupCustomCursor() {
+    const cursor = document.getElementById('customCursor');
+    if (!cursor) return;
+    
+    let mouseX = 0;
+    let mouseY = 0;
+    let cursorX = 0;
+    let cursorY = 0;
+    
+    // Track mouse position
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        cursor.classList.add('active');
+    });
+    
+    // Hide cursor when mouse leaves window
+    document.addEventListener('mouseleave', () => {
+        cursor.classList.remove('active');
+    });
+    
+    // Animate cursor to follow mouse smoothly
+    function animateCursor() {
+        const dx = mouseX - cursorX;
+        const dy = mouseY - cursorY;
+        
+        cursorX += dx * 0.1;
+        cursorY += dy * 0.1;
+        
+        cursor.style.left = cursorX + 'px';
+        cursor.style.top = cursorY + 'px';
+        
+        requestAnimationFrame(animateCursor);
+    }
+    
+    animateCursor();
+    
+    // Set initial phase color (default to phase 1)
+    if (!document.body.classList.contains('phase-1-active') && 
+        !document.body.classList.contains('phase-2-active') && 
+        !document.body.classList.contains('phase-3-active')) {
+        document.body.classList.add('phase-1-active');
+    }
+}
+
+// Parallax Background for Platform Page
+function setupParallaxBackground() {
+    const platformPage = document.getElementById('platformPage');
+    if (!platformPage) return;
+    
+    function updateParallax() {
+        const scrollY = window.scrollY || window.pageYOffset;
+        
+        // Layer 1 moves at 10% scroll speed
+        platformPage.style.setProperty('--parallax-1', `${scrollY * 0.1}px`);
+        
+        // Layer 2 moves at 15% scroll speed
+        platformPage.style.setProperty('--parallax-2', `${scrollY * 0.15}px`);
+        
+        requestAnimationFrame(updateParallax);
+    }
+    
+    // Start parallax animation
+    updateParallax();
 }

@@ -256,7 +256,10 @@
                     <div class="nav-divider"></div>
                     <div class="platform-logo">
                         <i class="fas fa-calendar-alt"></i>
-                        <span>Event Intelligence</span>
+                        <div class="platform-logo-text">
+                            <span class="platform-logo-title">Event Intelligence</span>
+                            <span class="platform-logo-subtitle">Platform v2.0</span>
+                        </div>
                     </div>
                 </div>
                 <div class="nav-links">
@@ -268,31 +271,13 @@
         </nav>
 
         <header class="hero platform-hero">
-            <div class="hero-overlay"></div>
             <div class="hero-content">
+                <div>
+                    <h1>Event Intelligence Platform</h1>
+                </div>
                 <div class="status-badge" id="apiStatus">
                     <div class="status-dot"></div>
                     <span>System Operational</span>
-                </div>
-                <h1>Event Intelligence Platform</h1>
-                <p>Discover Events • Analyze Attendees • Send Notifications • Drive Engagement</p>
-                
-                <div class="platform-stats">
-                    <div class="platform-stat-card">
-                        <i class="fas fa-chart-bar"></i>
-                        <div class="platform-stat-number">10K+</div>
-                        <div class="platform-stat-label">Events Tracked</div>
-                    </div>
-                    <div class="platform-stat-card">
-                        <i class="fas fa-users"></i>
-                        <div class="platform-stat-number">50K+</div>
-                        <div class="platform-stat-label">Attendees Analyzed</div>
-                    </div>
-                    <div class="platform-stat-card">
-                        <i class="fas fa-bell"></i>
-                        <div class="platform-stat-number">98%</div>
-                        <div class="platform-stat-label">Success Rate</div>
-                    </div>
                 </div>
             </div>
         </header>
@@ -302,7 +287,7 @@
             <section id="phase1" class="phase-section active">
                 <div class="phase-header">
                     <h2>Event Discovery</h2>
-                    <p>Find events in any location</p>
+                    <p>Search and discover events across any location with advanced filters</p>
                 </div>
                 
                 <div class="input-card">
@@ -384,8 +369,28 @@
 
                 <div id="eventsResults" class="results-section hidden">
                     <div class="results-header">
-                        <h3>Discovered Events</h3>
-                        <div class="results-stats" id="eventsStats"></div>
+                        <div>
+                            <h3>
+                                <div class="results-header-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                Discovered Events
+                            </h3>
+                            <p id="eventsSubtitle" class="results-subtitle">Showing events in New York</p>
+                        </div>
+                        <div class="results-header-actions">
+                            <div class="results-stats" id="eventsStats"></div>
+                            <div class="results-buttons">
+                                <button class="btn-filter">
+                                    <i class="fas fa-filter"></i>
+                                    Filter
+                                </button>
+                                <button class="btn-export">
+                                    <i class="fas fa-download"></i>
+                                    Export
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="table-container">
@@ -562,6 +567,9 @@
             <h3 id="loadingText">Processing request...</h3>
         </div>
     </div>
+
+    <!-- Custom Cursor -->
+    <div id="customCursor" class="custom-cursor"></div>
 
     <script src="/static/js/app.js"></script>
 </body>
