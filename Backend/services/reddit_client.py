@@ -18,7 +18,8 @@ class RedditClient:
     def __init__(self):
         self.client_id = os.getenv('REDDIT_CLIENT_ID')
         self.client_secret = os.getenv('REDDIT_CLIENT_SECRET')
-        self.user_agent = os.getenv('REDDIT_USER_AGENT', 'EventIntelPlatform/1.0')
+        # Reddit requires format: 'app-name/version by u/username'
+        self.user_agent = os.getenv('REDDIT_USER_AGENT', 'EventIntelPlatform/1.0 by u/Personal-Field1481')
         # Optional: username/password for authenticated read-only access
         self.username = os.getenv('REDDIT_USERNAME')
         self.password = os.getenv('REDDIT_PASSWORD')

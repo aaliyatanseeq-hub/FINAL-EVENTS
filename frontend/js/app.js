@@ -9,7 +9,138 @@ let notificationUsers = [];
 document.addEventListener('DOMContentLoaded', function() {
     initializeDates();
     setupEventListeners();
+    setupNavbarScroll();
+    initializeLandingPage();
 });
+
+// Page Navigation Functions
+function goToPlatform() {
+    document.getElementById('landingPage').classList.remove('active');
+    document.getElementById('platformPage').classList.add('active');
+    window.scrollTo(0, 0);
+    switchPhase('phase1');
+}
+
+function goToLanding() {
+    document.getElementById('platformPage').classList.remove('active');
+    document.getElementById('landingPage').classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+// Landing Page Initialization
+const eventCategories = [
+    { id: 1, title: 'Sports Events', description: '1,200+ Events', image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80', gradient: 'from-green-500/90 to-emerald-600/90' },
+    { id: 2, title: 'Music Concerts', description: '3,500+ Events', image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80', gradient: 'from-purple-500/90 to-pink-600/90' },
+    { id: 3, title: 'Conferences', description: '850+ Events', image: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&q=80', gradient: 'from-blue-500/90 to-indigo-600/90' },
+    { id: 4, title: 'Tech Talks', description: '2,100+ Events', image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&q=80', gradient: 'from-cyan-500/90 to-blue-600/90' },
+    { id: 5, title: 'Art & Exhibitions', description: '680+ Events', image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=800&q=80', gradient: 'from-orange-500/90 to-red-600/90' },
+    { id: 6, title: 'Food Festivals', description: '920+ Events', image: 'https://images.unsplash.com/photo-1504674900247-0877df9c8360?w=800&q=80', gradient: 'from-yellow-500/90 to-orange-600/90' },
+    { id: 7, title: 'Theater & Shows', description: '1,450+ Events', image: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=800&q=80', gradient: 'from-red-500/90 to-rose-600/90' },
+    { id: 8, title: 'Networking', description: '780+ Events', image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80', gradient: 'from-teal-500/90 to-cyan-600/90' },
+    { id: 9, title: 'Comedy Shows', description: '560+ Events', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80', gradient: 'from-pink-500/90 to-fuchsia-600/90' },
+    { id: 10, title: 'Workshops', description: '1,340+ Events', image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80', gradient: 'from-indigo-500/90 to-purple-600/90' },
+    { id: 11, title: 'Festivals', description: '2,200+ Events', image: 'https://images.unsplash.com/photo-1478147427282-58a87a120781?w=800&q=80', gradient: 'from-violet-500/90 to-purple-600/90' },
+    { id: 12, title: 'Dance Performances', description: '890+ Events', image: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&q=80', gradient: 'from-fuchsia-500/90 to-pink-600/90' }
+];
+
+function initializeLandingPage() {
+    populateHeroGrid();
+    populateCategories();
+    populateTrending();
+    setupSmoothScroll();
+    setupLandingNavbarScroll();
+}
+
+function populateHeroGrid() {
+    const heroGrid = document.getElementById('heroGrid');
+    if (!heroGrid) return;
+    
+    heroGrid.innerHTML = '';
+    const totalItems = 20;
+    for (let i = 0; i < totalItems; i++) {
+        const category = eventCategories[i % eventCategories.length];
+        const item = document.createElement('div');
+        item.className = 'hero-grid-item';
+        item.style.backgroundImage = `url(${category.image})`;
+        item.style.animationDelay = `${i * 0.05}s`;
+        heroGrid.appendChild(item);
+    }
+}
+
+function populateCategories() {
+    const grid = document.getElementById('categoriesGrid');
+    if (!grid) return;
+    
+    eventCategories.forEach((category, idx) => {
+        const card = document.createElement('div');
+        card.className = 'category-card-landing';
+        card.style.animationDelay = `${idx * 0.1}s`;
+        card.innerHTML = `
+            <img src="${category.image}" alt="${category.title}" class="category-card-image">
+            <div class="category-card-overlay"></div>
+            <div class="category-card-content">
+                <h3 class="category-card-title">${category.title}</h3>
+                <p class="category-card-description">${category.description}</p>
+                <div class="category-card-explore">
+                    <span>Explore</span>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function populateTrending() {
+    const grid = document.getElementById('trendingGrid');
+    if (!grid) return;
+    
+    eventCategories.slice(0, 4).forEach((category, idx) => {
+        const card = document.createElement('div');
+        card.className = 'trending-card';
+        card.style.animationDelay = `${idx * 0.15}s`;
+        card.innerHTML = `
+            <img src="${category.image}" alt="${category.title}" class="category-card-image">
+            <div class="category-card-overlay"></div>
+            <div class="category-card-content">
+                <div class="trending-badge">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Trending</span>
+                </div>
+                <h3 class="category-card-title">${category.title}</h3>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function setupSmoothScroll() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+}
+
+function setupLandingNavbarScroll() {
+    const navbar = document.getElementById('landingNavbar');
+    if (!navbar) return;
+    
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    });
+}
 
 function setupNavbarScroll() {
     const navbar = document.getElementById('navbar');

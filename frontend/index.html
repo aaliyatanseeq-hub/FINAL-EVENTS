@@ -3,275 +3,558 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Intelligence Platform</title>
+    <title>EVENTIUM - Event Intelligence Platform</title>
     <link rel="stylesheet" href="/static/styles/main.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-logo">
-                <i class="fas fa-calendar-alt"></i>
-                <span>Event Intelligence</span>
-            </div>
-            <div class="nav-links">
-                <a href="#phase1" class="nav-link active">Events</a>
-                <a href="#phase2" class="nav-link">Attendees</a>
-                <a href="#phase3" class="nav-link">Notifications</a>
-            </div>
-        </div>
-    </nav>
-
-    <header class="hero">
-        <div class="hero-content">
-            <h1>Event Intelligence Platform</h1>
-            <p>Discover Events • Analyze Attendees • Send Notifications</p>
-            <div class="status-badge" id="apiStatus">
-                <i class="fas fa-check-circle"></i>
-                System Ready
-            </div>
-        </div>
-    </header>
-
-    <main class="container">
-        <!-- Phase 1: Events -->
-        <section id="phase1" class="phase-section active">
-            <div class="phase-header">
-                <h2>Event Discovery</h2>
-                <p>Find events in any location</p>
-            </div>
-            
-            <div class="input-card">
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="location"><i class="fas fa-map-marker-alt"></i> Location</label>
-                        <input type="text" id="location" placeholder="Enter city or country" value="New York">
+    <!-- Landing Page -->
+    <div id="landingPage" class="page active">
+        <nav class="navbar landing-nav" id="landingNavbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-calendar-alt"></i>
                     </div>
-                    
-                    <div class="input-group">
-                        <label for="startDate"><i class="fas fa-calendar"></i> From Date</label>
-                        <input type="date" id="startDate">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="endDate"><i class="fas fa-calendar"></i> To Date</label>
-                        <input type="date" id="endDate">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="maxEvents"><i class="fas fa-chart-line"></i> Max Events</label>
-                        <input type="number" id="maxEvents" min="1" max="100" value="10">
+                    <div>
+                        <span class="logo-text">EVENTIUM</span>
+                        <div class="logo-tagline">Event Intelligence</div>
                     </div>
                 </div>
-
-                <div class="categories-section">
-                    <label><i class="fas fa-tags"></i> Event Categories</label>
-                    <div class="categories-grid">
-                        <label class="category-checkbox">
-                            <input type="checkbox" value="music" checked>
-                            <span class="checkmark">🎵 Music</span>
-                        </label>
-                        <label class="category-checkbox">
-                            <input type="checkbox" value="sports" checked>
-                            <span class="checkmark">⚽ Sports</span>
-                        </label>
-                        <label class="category-checkbox">
-                            <input type="checkbox" value="food" checked>
-                            <span class="checkmark">🍕 Food</span>
-                        </label>
-                        <label class="category-checkbox">
-                            <input type="checkbox" value="arts" checked>
-                            <span class="checkmark">🎨 Arts</span>
-                        </label>
-                        <label class="category-checkbox">
-                            <input type="checkbox" value="business">
-                            <span class="checkmark">💼 Business</span>
-                        </label>
-                        <label class="category-checkbox">
-                            <input type="checkbox" value="conference">
-                            <span class="checkmark">🏛️ Conference</span>
-                        </label>
-                        <label class="category-checkbox">
-                            <input type="checkbox" value="festival">
-                            <span class="checkmark">🎪 Festival</span>
-                        </label>
-                        <label class="category-checkbox">
-                            <input type="checkbox" value="comedy">
-                            <span class="checkmark">🎭 Comedy</span>
-                        </label>
-                        <label class="category-checkbox">
-                            <input type="checkbox" value="family">
-                            <span class="checkmark">👨‍👩‍👧‍👦 Family</span>
-                        </label>
-                    </div>
+                <div class="nav-links">
+                    <a href="#categories" class="nav-link">Browse</a>
+                    <a href="#trending" class="nav-link">Trending</a>
+                    <a href="#how-it-works" class="nav-link">How It Works</a>
                 </div>
-
-                <button class="btn-primary" onclick="discoverEvents()">
-                    <i class="fas fa-search"></i>
-                    Discover Events
+                <button class="btn-launch" onclick="goToPlatform()">
+                    Launch Platform
                 </button>
             </div>
+        </nav>
 
-            <div id="eventsResults" class="results-section hidden">
-                <div class="results-header">
-                    <h3>Discovered Events</h3>
-                    <div class="results-stats" id="eventsStats"></div>
-                </div>
-                
-                <div class="table-container">
-                    <table id="eventsTable">
-                        <thead>
-                            <tr>
-                                <th>Event Name</th>
-                                <th>Date</th>
-                                <th>Venue</th>
-                                <th>Category</th>
-                                <th>Source</th>
-                                <th>Confidence</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="eventsTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- Phase 2: Attendees -->
-        <section id="phase2" class="phase-section">
-            <div class="phase-header">
-                <h2>Attendee Discovery</h2>
-                <p>Find users discussing events</p>
-            </div>
+        <!-- Hero Section -->
+        <section class="hero landing-hero" id="hero">
+            <div class="hero-grid" id="heroGrid"></div>
+            <div class="hero-overlay"></div>
+            <div class="floating-blob blob-1"></div>
+            <div class="floating-blob blob-2"></div>
             
-            <div class="input-card">
-                <div class="input-group">
-                    <label for="eventSelect"><i class="fas fa-calendar-check"></i> Select Event</label>
-                    <select id="eventSelect">
-                        <option value="">-- Select from events --</option>
-                    </select>
+            <div class="hero-content">
+                <div class="hero-badge animate-fade-in">
+                    <i class="fas fa-sparkles"></i>
+                    <span>Discover 10,000+ Events Worldwide</span>
                 </div>
                 
-                <div class="input-group">
-                    <label for="manualEvent"><i class="fas fa-edit"></i> Or Enter Event</label>
-                    <input type="text" id="manualEvent" placeholder="Enter event name">
-                </div>
+                <h1 class="hero-title animate-fade-in delay-100">
+                    Award-winning event
+                    <br>
+                    discovery platform.
+                    <br>
+                    <span class="gradient-text">Ad-free, intelligent.</span>
+                </h1>
                 
-                <div class="input-group">
-                    <label for="eventDate"><i class="fas fa-calendar-day"></i> Event Date (Optional)</label>
-                    <input type="text" id="eventDate" placeholder="2024 or 2024-12-25">
-                </div>
+                <p class="hero-description animate-fade-in delay-200">
+                    Eventium is the place for events that inspire. Discover thousands of sports, music, conferences, and tech talks on everything you've ever wondered about.
+                </p>
                 
-                <div class="input-group">
-                    <label for="maxAttendees"><i class="fas fa-users"></i> Max Attendees</label>
-                    <input type="number" id="maxAttendees" min="1" max="100" value="10">
-                </div>
-
-                <button class="btn-primary" onclick="discoverAttendees()">
-                    <i class="fas fa-users"></i>
-                    Find Attendees
-                </button>
-            </div>
-
-            <div id="attendeesResults" class="results-section hidden">
-                <div class="results-header">
-                    <h3>Event Attendees</h3>
-                    <div class="results-stats" id="attendeesStats"></div>
-                </div>
-                
-                <div class="table-container">
-                    <table id="attendeesTable">
-                        <thead>
-                            <tr>
-                                <th>
-                                    <input type="checkbox" id="selectAllAttendees" onchange="toggleSelectAll()">
-                                    Select
-                                </th>
-                                <th>Username</th>
-                                <th>Source</th>
-                                <th>Engagement</th>
-                                <th>Post Content</th>
-                                <th>Post Date</th>
-                                <th>Location</th>
-                                <th>Followers</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="attendeesTableBody"></tbody>
-                    </table>
-                </div>
-                
-                <div class="selection-actions hidden" id="selectionActions">
-                    <button class="btn-primary" onclick="sendToNotifications()">
-                        <i class="fas fa-paper-plane"></i>
-                        Send Selected to Notifications
+                <div class="hero-cta animate-fade-in delay-300">
+                    <button class="btn-primary btn-hero" onclick="goToPlatform()">
+                        <span>Discover Events Now</span>
+                        <i class="fas fa-arrow-right"></i>
                     </button>
-                    <span id="selectedCount">0 users selected</span>
                 </div>
-            </div>
-        </section>
-
-        <!-- Phase 3: Notifications -->
-        <section id="phase3" class="phase-section">
-            <div class="phase-header">
-                <h2>Notification Center</h2>
-                <p>Send messages to selected users</p>
+                
+                <p class="hero-subtext">Start exploring events at no cost • No credit card required</p>
             </div>
             
-            <div class="input-card">
-                <div class="input-group">
-                    <label for="notificationMessage"><i class="fas fa-envelope"></i> Message</label>
-                    <textarea id="notificationMessage" rows="6" placeholder="Enter your message here..."></textarea>
-                </div>
-                
-                <div class="input-group">
-                    <label for="messageType"><i class="fas fa-tag"></i> Message Type</label>
-                    <select id="messageType">
-                        <option value="event_update">Event Update</option>
-                        <option value="reminder">Reminder</option>
-                        <option value="special_offer">Special Offer</option>
-                        <option value="general">General Message</option>
-                    </select>
-                </div>
-
-                <button class="btn-primary" onclick="sendNotifications()">
-                    <i class="fas fa-paper-plane"></i>
-                    Send Notifications
-                </button>
-            </div>
-
-            <div class="results-section">
-                <div class="results-header">
-                    <h3>Selected Users</h3>
-                    <div class="results-stats" id="notificationStats">
-                        <span id="totalSelected">0 users selected</span>
-                    </div>
-                </div>
-                
-                <div class="table-container">
-                    <table id="notificationsTable">
-                        <thead>
-                            <tr>
-                                <th>Username</th>
-                                <th>Source</th>
-                                <th>Followers</th>
-                                <th>Engagement</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="notificationsTableBody">
-                            <tr>
-                                <td colspan="6" style="text-align: center; padding: 2rem; color: #666;">
-                                    No users selected yet. Go to Attendees phase and select users to notify.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="scroll-indicator">
+                <div class="mouse">
+                    <div class="mouse-dot"></div>
                 </div>
             </div>
         </section>
-    </main>
+
+        <!-- PHASE 1: Event Categories -->
+        <section id="categories" class="phase-section-landing phase-1">
+            <div class="phase-indicator">
+                <div class="phase-badge">PHASE 1</div>
+                <div class="phase-line"></div>
+            </div>
+            <div class="phase-header">
+                <h2>Discover events on Eventium</h2>
+                <p>Browse by category and find your next experience across 12 diverse event types</p>
+            </div>
+            <div class="categories-grid-landing" id="categoriesGrid"></div>
+        </section>
+
+        <!-- PHASE 2: Trending Events -->
+        <section id="trending" class="phase-section-landing phase-2">
+            <div class="phase-indicator">
+                <div class="phase-badge phase-2-badge">PHASE 2</div>
+                <div class="phase-line phase-2-line"></div>
+            </div>
+            <div class="phase-header">
+                <div>
+                    <h2>Trending This Week</h2>
+                    <p>Most popular events right now</p>
+                </div>
+                <button class="btn-view-all">View All</button>
+            </div>
+            <div class="trending-grid" id="trendingGrid"></div>
+        </section>
+
+        <!-- PHASE 3: How It Works -->
+        <section id="how-it-works" class="phase-section-landing phase-3">
+            <div class="phase-indicator">
+                <div class="phase-badge phase-3-badge">PHASE 3</div>
+                <div class="phase-line phase-3-line"></div>
+            </div>
+            <div class="phase-header">
+                <h2>How Eventium Works</h2>
+                <p>Your complete event intelligence platform in three simple steps</p>
+            </div>
+            
+            <div class="how-it-works-grid">
+                <div class="feature-card step-1">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="feature-content">
+                        <div class="step-label">STEP 1</div>
+                        <h3>Discover Events</h3>
+                        <p>Search and filter through thousands of events using our advanced discovery engine with AI-powered recommendations.</p>
+                        <ul class="feature-list">
+                            <li><span class="dot"></span>12 event categories</li>
+                            <li><span class="dot"></span>Real-time updates</li>
+                            <li><span class="dot"></span>Smart filters</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="feature-card step-2">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="feature-content">
+                        <div class="step-label">STEP 2</div>
+                        <h3>Analyze Insights</h3>
+                        <p>Get deep analytics on attendee behavior, engagement metrics, and event performance with real-time dashboards.</p>
+                        <ul class="feature-list">
+                            <li><span class="dot"></span>Attendee insights</li>
+                            <li><span class="dot"></span>Performance metrics</li>
+                            <li><span class="dot"></span>Trend analysis</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="feature-card step-3">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="feature-content">
+                        <div class="step-label">STEP 3</div>
+                        <h3>Drive Engagement</h3>
+                        <p>Send targeted notifications and personalized messages to boost attendance and create memorable experiences.</p>
+                        <ul class="feature-list">
+                            <li><span class="dot"></span>Smart notifications</li>
+                            <li><span class="dot"></span>Personalized content</li>
+                            <li><span class="dot"></span>Multi-channel reach</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">10K+</div>
+                    <div class="stat-label">Events Listed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">Cities Worldwide</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">50K+</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA -->
+        <section class="cta-section">
+            <div class="cta-blob-1"></div>
+            <div class="cta-blob-2"></div>
+            <div class="cta-content">
+                <h2>Ready to transform your<br><span class="gradient-text">event experience?</span></h2>
+                <p>Join thousands discovering and managing amazing events every day</p>
+                <button class="btn-primary btn-cta-large" onclick="goToPlatform()">
+                    <span>Start Discovering Events</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+                <p class="cta-subtext">14-day free trial • No credit card required • Cancel anytime</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <span class="logo-text">EVENTIUM</span>
+                    <p>The ultimate platform for event discovery and intelligence.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Categories</h4>
+                        <a href="#">Sports Events</a>
+                        <a href="#">Music Concerts</a>
+                        <a href="#">Conferences</a>
+                        <a href="#">Tech Talks</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Company</h4>
+                        <a href="#">About Us</a>
+                        <a href="#">Blog</a>
+                        <a href="#">Careers</a>
+                        <a href="#">Contact</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Legal</h4>
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Terms of Service</a>
+                        <a href="#">Security</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-copyright">
+                <p>© 2025 Eventium Intelligence Platform. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Platform Page -->
+    <div id="platformPage" class="page">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <button class="btn-back" onclick="goToLanding()">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back</span>
+                    </button>
+                    <div class="nav-divider"></div>
+                    <div class="platform-logo">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Event Intelligence</span>
+                    </div>
+                </div>
+                <div class="nav-links">
+                    <a href="#phase1" class="nav-link active">Events</a>
+                    <a href="#phase2" class="nav-link">Attendees</a>
+                    <a href="#phase3" class="nav-link">Notifications</a>
+                </div>
+            </div>
+        </nav>
+
+        <header class="hero platform-hero">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="status-badge" id="apiStatus">
+                    <div class="status-dot"></div>
+                    <span>System Operational</span>
+                </div>
+                <h1>Event Intelligence Platform</h1>
+                <p>Discover Events • Analyze Attendees • Send Notifications • Drive Engagement</p>
+                
+                <div class="platform-stats">
+                    <div class="platform-stat-card">
+                        <i class="fas fa-chart-bar"></i>
+                        <div class="platform-stat-number">10K+</div>
+                        <div class="platform-stat-label">Events Tracked</div>
+                    </div>
+                    <div class="platform-stat-card">
+                        <i class="fas fa-users"></i>
+                        <div class="platform-stat-number">50K+</div>
+                        <div class="platform-stat-label">Attendees Analyzed</div>
+                    </div>
+                    <div class="platform-stat-card">
+                        <i class="fas fa-bell"></i>
+                        <div class="platform-stat-number">98%</div>
+                        <div class="platform-stat-label">Success Rate</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container">
+            <!-- Phase 1: Events -->
+            <section id="phase1" class="phase-section active">
+                <div class="phase-header">
+                    <h2>Event Discovery</h2>
+                    <p>Find events in any location</p>
+                </div>
+                
+                <div class="input-card">
+                    <div class="form-header">
+                        <div class="form-badge">
+                            <i class="fas fa-sparkles"></i>
+                            <span>Advanced Search</span>
+                        </div>
+                    </div>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label for="location"><i class="fas fa-map-marker-alt"></i> Location</label>
+                            <input type="text" id="location" placeholder="Enter city or country" value="New York">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="startDate"><i class="fas fa-calendar"></i> From Date</label>
+                            <input type="date" id="startDate">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="endDate"><i class="fas fa-calendar"></i> To Date</label>
+                            <input type="date" id="endDate">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="maxEvents"><i class="fas fa-chart-line"></i> Max Events</label>
+                            <input type="number" id="maxEvents" min="1" max="100" value="10">
+                        </div>
+                    </div>
+
+                    <div class="categories-section">
+                        <label><i class="fas fa-tags"></i> Event Categories</label>
+                        <div class="categories-grid">
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="music" checked>
+                                <span class="checkmark">🎵 Music</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="sports" checked>
+                                <span class="checkmark">⚽ Sports</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="food" checked>
+                                <span class="checkmark">🍕 Food</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="arts" checked>
+                                <span class="checkmark">🎨 Arts</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="business">
+                                <span class="checkmark">💼 Business</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="conference">
+                                <span class="checkmark">🏛️ Conference</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="festival">
+                                <span class="checkmark">🎪 Festival</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="comedy">
+                                <span class="checkmark">🎭 Comedy</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="family">
+                                <span class="checkmark">👨‍👩‍👧‍👦 Family</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" onclick="discoverEvents()">
+                        <i class="fas fa-search"></i>
+                        Discover Events
+                    </button>
+                </div>
+
+                <div id="eventsResults" class="results-section hidden">
+                    <div class="results-header">
+                        <h3>Discovered Events</h3>
+                        <div class="results-stats" id="eventsStats"></div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="eventsTable">
+                            <thead>
+                                <tr>
+                                    <th>Event Name</th>
+                                    <th>Date</th>
+                                    <th>Venue</th>
+                                    <th>Category</th>
+                                    <th>Source</th>
+                                    <th>Confidence</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eventsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Phase 2: Attendees -->
+            <section id="phase2" class="phase-section">
+                <div class="phase-header">
+                    <h2>Attendee Discovery</h2>
+                    <p>Find users discussing events</p>
+                </div>
+                
+                <div class="input-card">
+                    <div class="form-header">
+                        <div class="form-badge">
+                            <i class="fas fa-sparkles"></i>
+                            <span>Attendee Discovery</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="eventSelect"><i class="fas fa-calendar-check"></i> Select Event</label>
+                        <select id="eventSelect">
+                            <option value="">-- Select from events --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="manualEvent"><i class="fas fa-edit"></i> Or Enter Event</label>
+                        <input type="text" id="manualEvent" placeholder="Enter event name">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="eventDate"><i class="fas fa-calendar-day"></i> Event Date (Optional)</label>
+                        <input type="text" id="eventDate" placeholder="2024 or 2024-12-25">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="maxAttendees"><i class="fas fa-users"></i> Max Attendees</label>
+                        <input type="number" id="maxAttendees" min="1" max="100" value="10">
+                    </div>
+
+                    <button class="btn-primary" onclick="discoverAttendees()">
+                        <i class="fas fa-users"></i>
+                        Find Attendees
+                    </button>
+                </div>
+
+                <div id="attendeesResults" class="results-section hidden">
+                    <div class="results-header">
+                        <h3>Event Attendees</h3>
+                        <div class="results-stats" id="attendeesStats"></div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="attendeesTable">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" id="selectAllAttendees" onchange="toggleSelectAll()">
+                                        Select
+                                    </th>
+                                    <th>Username</th>
+                                    <th>Source</th>
+                                    <th>Engagement</th>
+                                    <th>Post Content</th>
+                                    <th>Post Date</th>
+                                    <th>Location</th>
+                                    <th>Followers</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendeesTableBody"></tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="selection-actions hidden" id="selectionActions">
+                        <button class="btn-primary" onclick="sendToNotifications()">
+                            <i class="fas fa-paper-plane"></i>
+                            Send Selected to Notifications
+                        </button>
+                        <span id="selectedCount">0 users selected</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Phase 3: Notifications -->
+            <section id="phase3" class="phase-section">
+                <div class="phase-header">
+                    <h2>Notification Center</h2>
+                    <p>Send messages to selected users</p>
+                </div>
+                
+                <div class="input-card">
+                    <div class="form-header">
+                        <div class="form-badge">
+                            <i class="fas fa-sparkles"></i>
+                            <span>Notification Center</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="notificationMessage"><i class="fas fa-envelope"></i> Message</label>
+                        <textarea id="notificationMessage" rows="6" placeholder="Enter your message here..."></textarea>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="messageType"><i class="fas fa-tag"></i> Message Type</label>
+                        <select id="messageType">
+                            <option value="event_update">Event Update</option>
+                            <option value="reminder">Reminder</option>
+                            <option value="special_offer">Special Offer</option>
+                            <option value="general">General Message</option>
+                        </select>
+                    </div>
+
+                    <button class="btn-primary" onclick="sendNotifications()">
+                        <i class="fas fa-paper-plane"></i>
+                        Send Notifications
+                    </button>
+                </div>
+
+                <div class="results-section">
+                    <div class="results-header">
+                        <h3>Selected Users</h3>
+                        <div class="results-stats" id="notificationStats">
+                            <span id="totalSelected">0 users selected</span>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="notificationsTable">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Source</th>
+                                    <th>Followers</th>
+                                    <th>Engagement</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="notificationsTableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 2rem; color: #666;">
+                                        No users selected yet. Go to Attendees phase and select users to notify.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <div id="loadingModal" class="modal hidden">
         <div class="modal-content">
