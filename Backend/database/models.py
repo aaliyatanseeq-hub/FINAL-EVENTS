@@ -51,6 +51,12 @@ class Event(Base):
     hype_score = Column(Float, default=0.0)
     source = Column(String(50), default='unknown', index=True)
     source_data = Column(JSON)
+    # Quality filtering fields
+    is_real_event = Column(Boolean, default=True, index=True)  # False = noise/utility
+    quality_score = Column(Float, default=1.0, index=True)  # 0.0 to 1.0
+    clean_category = Column(String(100))  # Cleaned/inferred category
+    rejection_reasons = Column(JSON)  # List of rejection reasons if filtered
+    quality_confidence = Column(Float, default=1.0)  # Confidence in quality assessment
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

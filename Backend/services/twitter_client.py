@@ -76,11 +76,11 @@ class TwitterClient:
         return True
 
     def search_recent_tweets_safe(self, query: str, max_results: int = 10, **kwargs):
-        """Optimized search with manual rate limiting"""
+        """Optimized search with manual rate limiting and 429 error handling"""
         try:
             if not self._check_rate_limit():
                 print("🚫 Search blocked: Rate limit reached")
-                return None
+                return {'error': 'rate_limit', 'data': None}
             
             print(f"🔍 Searching: '{query}'")
             print(f"📊 Quota: {self.rate_limit_remaining}/60 searches left")
@@ -93,6 +93,18 @@ class TwitterClient:
                 **kwargs
             )
             
+            # Extract actual rate limit info from API response headers
+            # Twitter API v2 returns rate limit in response.meta or we need to check headers
+            if hasattr(response, 'meta') and response.meta:
+                # Check if rate limit info is in meta
+                if 'result_count' in response.meta:
+                    # Rate limit info might be in response object
+                    pass
+            
+            # Try to get rate limit from response headers (if available via tweepy)
+            # Note: tweepy might not expose headers directly, so we track locally
+            # but sync with actual API responses when we get 429 errors
+            
             self.rate_limit_remaining -= 1
             self.total_searches_used += 1
             
@@ -103,7 +115,83 @@ class TwitterClient:
             
             return response
             
+        except tweepy.TooManyRequests as e:
+            # 429 Rate Limit Error - Stop making more requests
+            error_str = str(e)
+            print(f"❌ Search failed: 429 Too Many Requests")
+            
+            # Try to extract rate limit reset time from error
+            reset_time_str = "Unknown"
+            remaining_str = "Unknown"
+            
+            # Check multiple ways to get rate limit info
+            if hasattr(e, 'response') and e.response is not None:
+                # Method 1: Check response headers
+                headers = getattr(e.response, 'headers', {})
+                if isinstance(headers, dict):
+                    if 'x-rate-limit-reset' in headers:
+                        reset_timestamp = int(headers['x-rate-limit-reset'])
+                        reset_time = datetime.fromtimestamp(reset_timestamp)
+                        reset_time_str = reset_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                        # Update our tracking to match API
+                        self.rate_limit_remaining = 0
+                        self.last_reset_time = reset_time
+                    if 'x-rate-limit-remaining' in headers:
+                        remaining_str = headers.get('x-rate-limit-remaining', '0')
+                        try:
+                            self.rate_limit_remaining = int(remaining_str)
+                        except:
+                            self.rate_limit_remaining = 0
+                
+                # Method 2: Check if response has rate_limit attribute
+                if hasattr(e.response, 'rate_limit'):
+                    rate_limit = e.response.rate_limit
+                    if hasattr(rate_limit, 'reset'):
+                        reset_time = datetime.fromtimestamp(rate_limit.reset)
+                        reset_time_str = reset_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                    if hasattr(rate_limit, 'remaining'):
+                        remaining_str = str(rate_limit.remaining)
+                        self.rate_limit_remaining = rate_limit.remaining
+            
+            # Check error message for rate limit info
+            if 'reset' in error_str.lower() or 'x-rate-limit' in error_str.lower():
+                # Try to parse reset time from error message
+                import re
+                reset_match = re.search(r'reset[:\s]+(\d+)', error_str, re.IGNORECASE)
+                if reset_match:
+                    reset_timestamp = int(reset_match.group(1))
+                    reset_time = datetime.fromtimestamp(reset_timestamp)
+                    reset_time_str = reset_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+            
+            print(f"   ⚠️ Rate limit exceeded (15-minute rolling window).")
+            if remaining_str != "Unknown":
+                print(f"   📊 Rate limit remaining: {remaining_str}/60")
+            print(f"   ⏰ Rate limit resets at: {reset_time_str}")
+            print(f"   💡 This is a 15-minute rolling window limit, not monthly quota")
+            
+            # Set remaining to 0 to prevent further requests
+            self.rate_limit_remaining = 0
+            return {'error': 'rate_limit_429', 'data': None, 'message': '429 Too Many Requests', 'reset_time': reset_time_str}
         except Exception as e:
+            error_str = str(e)
+            # Check if it's a 429 error in the message
+            if '429' in error_str or 'Too Many Requests' in error_str:
+                print(f"❌ Search failed: 429 Too Many Requests")
+                
+                # Try to extract rate limit info from exception
+                reset_time_str = "Check Twitter API dashboard"
+                if hasattr(e, 'response') and e.response is not None:
+                    headers = getattr(e.response, 'headers', {})
+                    if 'x-rate-limit-reset' in headers:
+                        reset_timestamp = int(headers['x-rate-limit-reset'])
+                        reset_time = datetime.fromtimestamp(reset_timestamp)
+                        reset_time_str = reset_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                
+                print(f"   ⚠️ Rate limit exceeded. Stopping further queries to preserve quota.")
+                print(f"   ⏰ Rate limit resets at: {reset_time_str}")
+                print(f"   💡 Check your Twitter API dashboard for monthly/daily limits")
+                self.rate_limit_remaining = 0
+                return {'error': 'rate_limit_429', 'data': None, 'message': error_str, 'reset_time': reset_time_str}
             print(f"❌ Search failed: {e}")
             return None
 

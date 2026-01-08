@@ -45,15 +45,11 @@
             <div class="hero-content">
                 <div class="hero-badge animate-fade-in">
                     <i class="fas fa-sparkles"></i>
-                    <span>Discover 10,000+ Events Worldwide</span>
+                    <span>Discover Events Worldwide</span>
                 </div>
                 
                 <h1 class="hero-title animate-fade-in delay-100">
-                    Award-winning event
-                    <br>
-                    discovery platform.
-                    <br>
-                    <span class="gradient-text">Ad-free, intelligent.</span>
+                    <span class="gradient-text">Where every events <br>Finds it's crowd.</span>
                 </h1>
                 
                 <p class="hero-description animate-fade-in delay-200">
@@ -67,7 +63,7 @@
                     </button>
                 </div>
                 
-                <p class="hero-subtext">Start exploring events at no cost • No credit card required</p>
+                <p class="hero-subtext">Start exploring events at eventum . Discover. Gather. Connect.</p>
             </div>
             
             <div class="scroll-indicator">
@@ -256,10 +252,7 @@
                     <div class="nav-divider"></div>
                     <div class="platform-logo">
                         <i class="fas fa-calendar-alt"></i>
-                        <div class="platform-logo-text">
-                            <span class="platform-logo-title">Event Intelligence</span>
-                            <span class="platform-logo-subtitle">Platform v2.0</span>
-                        </div>
+                        <span>Event Intelligence</span>
                     </div>
                 </div>
                 <div class="nav-links">
@@ -270,14 +263,13 @@
             </div>
         </nav>
 
-        <header class="hero platform-hero">
+        <header class="hero">
             <div class="hero-content">
-                <div>
-                    <h1>Event Intelligence Platform</h1>
-                </div>
+                <h1>Event Intelligence Platform</h1>
+                <p>Discover Events • Analyze Attendees • Send Notifications</p>
                 <div class="status-badge" id="apiStatus">
-                    <div class="status-dot"></div>
-                    <span>System Operational</span>
+                    <i class="fas fa-check-circle"></i>
+                    System Ready
                 </div>
             </div>
         </header>
@@ -287,16 +279,10 @@
             <section id="phase1" class="phase-section active">
                 <div class="phase-header">
                     <h2>Event Discovery</h2>
-                    <p>Search and discover events across any location with advanced filters</p>
+                    <p>Find events in any location</p>
                 </div>
                 
                 <div class="input-card">
-                    <div class="form-header">
-                        <div class="form-badge">
-                            <i class="fas fa-sparkles"></i>
-                            <span>Advanced Search</span>
-                        </div>
-                    </div>
                     <div class="input-grid">
                         <div class="input-group">
                             <label for="location"><i class="fas fa-map-marker-alt"></i> Location</label>
@@ -323,40 +309,56 @@
                         <label><i class="fas fa-tags"></i> Event Categories</label>
                         <div class="categories-grid">
                             <label class="category-checkbox">
-                                <input type="checkbox" value="music" checked>
-                                <span class="checkmark">🎵 Music</span>
+                                <input type="checkbox" value="music" class="category-input">
+                                <span class="checkmark">Music</span>
                             </label>
                             <label class="category-checkbox">
-                                <input type="checkbox" value="sports" checked>
-                                <span class="checkmark">⚽ Sports</span>
+                                <input type="checkbox" value="sports" class="category-input">
+                                <span class="checkmark">Sports</span>
                             </label>
                             <label class="category-checkbox">
-                                <input type="checkbox" value="food" checked>
-                                <span class="checkmark">🍕 Food</span>
+                                <input type="checkbox" value="arts" class="category-input">
+                                <span class="checkmark">Arts</span>
                             </label>
                             <label class="category-checkbox">
-                                <input type="checkbox" value="arts" checked>
-                                <span class="checkmark">🎨 Arts</span>
+                                <input type="checkbox" value="business" class="category-input">
+                                <span class="checkmark">Business</span>
                             </label>
                             <label class="category-checkbox">
-                                <input type="checkbox" value="business">
-                                <span class="checkmark">💼 Business</span>
+                                <input type="checkbox" value="conference" class="category-input">
+                                <span class="checkmark">Conference</span>
                             </label>
                             <label class="category-checkbox">
-                                <input type="checkbox" value="conference">
-                                <span class="checkmark">🏛️ Conference</span>
+                                <input type="checkbox" value="festival" class="category-input">
+                                <span class="checkmark">Festival</span>
                             </label>
                             <label class="category-checkbox">
-                                <input type="checkbox" value="festival">
-                                <span class="checkmark">🎪 Festival</span>
+                                <input type="checkbox" value="comedy" class="category-input">
+                                <span class="checkmark">Comedy</span>
                             </label>
                             <label class="category-checkbox">
-                                <input type="checkbox" value="comedy">
-                                <span class="checkmark">🎭 Comedy</span>
+                                <input type="checkbox" value="family" class="category-input">
+                                <span class="checkmark">Family</span>
                             </label>
                             <label class="category-checkbox">
-                                <input type="checkbox" value="family">
-                                <span class="checkmark">👨‍👩‍👧‍👦 Family</span>
+                                <input type="checkbox" value="tech" class="category-input">
+                                <span class="checkmark">Tech</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="theater" class="category-input">
+                                <span class="checkmark">Theater</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="dance" class="category-input">
+                                <span class="checkmark">Dance</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="networking" class="category-input">
+                                <span class="checkmark">Networking</span>
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" value="workshop" class="category-input">
+                                <span class="checkmark">Workshop</span>
                             </label>
                         </div>
                     </div>
@@ -369,27 +371,13 @@
 
                 <div id="eventsResults" class="results-section hidden">
                     <div class="results-header">
-                        <div>
-                            <h3>
-                                <div class="results-header-icon">
-                                    <i class="fas fa-star"></i>
-                                </div>
-                                Discovered Events
-                            </h3>
-                            <p id="eventsSubtitle" class="results-subtitle">Showing events in New York</p>
-                        </div>
-                        <div class="results-header-actions">
-                            <div class="results-stats" id="eventsStats"></div>
-                            <div class="results-buttons">
-                                <button class="btn-filter">
-                                    <i class="fas fa-filter"></i>
-                                    Filter
-                                </button>
-                                <button class="btn-export">
-                                    <i class="fas fa-download"></i>
-                                    Export
-                                </button>
-                            </div>
+                        <h3>Discovered Events</h3>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div class="results-stats" id="eventsStats"></div>
+                            <button class="btn-secondary" onclick="exportEvents()" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-file-excel"></i>
+                                Export to Excel
+                            </button>
                         </div>
                     </div>
                     
@@ -398,11 +386,10 @@
                             <thead>
                                 <tr>
                                     <th>Event Name</th>
-                                    <th>Date</th>
+                                    <th>Date & Time</th>
                                     <th>Venue</th>
                                     <th>Category</th>
                                     <th>Source</th>
-                                    <th>Confidence</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -420,12 +407,6 @@
                 </div>
                 
                 <div class="input-card">
-                    <div class="form-header">
-                        <div class="form-badge">
-                            <i class="fas fa-sparkles"></i>
-                            <span>Attendee Discovery</span>
-                        </div>
-                    </div>
                     <div class="input-group">
                         <label for="eventSelect"><i class="fas fa-calendar-check"></i> Select Event</label>
                         <select id="eventSelect">
@@ -457,7 +438,13 @@
                 <div id="attendeesResults" class="results-section hidden">
                     <div class="results-header">
                         <h3>Event Attendees</h3>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
                         <div class="results-stats" id="attendeesStats"></div>
+                            <button class="btn-secondary" onclick="exportAttendees()" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-file-excel"></i>
+                                Export to Excel
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="table-container">
@@ -500,12 +487,6 @@
                 </div>
                 
                 <div class="input-card">
-                    <div class="form-header">
-                        <div class="form-badge">
-                            <i class="fas fa-sparkles"></i>
-                            <span>Notification Center</span>
-                        </div>
-                    </div>
                     <div class="input-group">
                         <label for="notificationMessage"><i class="fas fa-envelope"></i> Message</label>
                         <textarea id="notificationMessage" rows="6" placeholder="Enter your message here..."></textarea>
@@ -562,14 +543,12 @@
     </div>
 
     <div id="loadingModal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content loading-modal-content">
             <div class="loader"></div>
-            <h3 id="loadingText">Processing request...</h3>
+            <h3 id="loadingText" style="color: #1e293b; margin-top: 1rem; font-size: 1.1rem; font-weight: 600;">Processing request...</h3>
+            <p id="loadingSubtext" style="color: #64748b; margin-top: 0.5rem; font-size: 0.9rem;">Please wait while we process your request</p>
         </div>
     </div>
-
-    <!-- Custom Cursor -->
-    <div id="customCursor" class="custom-cursor"></div>
 
     <script src="/static/js/app.js"></script>
 </body>

@@ -11,8 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     setupNavbarScroll();
     initializeLandingPage();
-    setupCustomCursor();
-    setupParallaxBackground();
 });
 
 // Page Navigation Functions
@@ -21,22 +19,12 @@ function goToPlatform() {
     document.getElementById('platformPage').classList.add('active');
     window.scrollTo(0, 0);
     switchPhase('phase1');
-    // Ensure cursor is visible on platform page
-    const cursor = document.getElementById('customCursor');
-    if (cursor) {
-        cursor.classList.add('active');
-    }
 }
 
 function goToLanding() {
     document.getElementById('platformPage').classList.remove('active');
     document.getElementById('landingPage').classList.add('active');
     window.scrollTo(0, 0);
-    // Hide cursor on landing page
-    const cursor = document.getElementById('customCursor');
-    if (cursor) {
-        cursor.classList.remove('active');
-    }
 }
 
 // Landing Page Initialization
@@ -46,12 +34,11 @@ const eventCategories = [
     { id: 3, title: 'Conferences', description: '850+ Events', image: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&q=80', gradient: 'from-blue-500/90 to-indigo-600/90' },
     { id: 4, title: 'Tech Talks', description: '2,100+ Events', image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&q=80', gradient: 'from-cyan-500/90 to-blue-600/90' },
     { id: 5, title: 'Art & Exhibitions', description: '680+ Events', image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=800&q=80', gradient: 'from-orange-500/90 to-red-600/90' },
-    { id: 6, title: 'Food Festivals', description: '920+ Events', image: 'https://images.unsplash.com/photo-1504674900247-0877df9c8360?w=800&q=80', gradient: 'from-yellow-500/90 to-orange-600/90' },
-    { id: 7, title: 'Theater & Shows', description: '1,450+ Events', image: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=800&q=80', gradient: 'from-red-500/90 to-rose-600/90' },
-    { id: 8, title: 'Networking', description: '780+ Events', image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80', gradient: 'from-teal-500/90 to-cyan-600/90' },
-    { id: 9, title: 'Comedy Shows', description: '560+ Events', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80', gradient: 'from-pink-500/90 to-fuchsia-600/90' },
-    { id: 10, title: 'Workshops', description: '1,340+ Events', image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80', gradient: 'from-indigo-500/90 to-purple-600/90' },
-    { id: 11, title: 'Festivals', description: '2,200+ Events', image: 'https://images.unsplash.com/photo-1478147427282-58a87a120781?w=800&q=80', gradient: 'from-violet-500/90 to-purple-600/90' },
+    { id: 6, title: 'Theater & Shows', description: '1,450+ Events', image: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=800&q=80', gradient: 'from-red-500/90 to-rose-600/90' },
+    { id: 7, title: 'Networking', description: '780+ Events', image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80', gradient: 'from-teal-500/90 to-cyan-600/90' },
+    { id: 8, title: 'Comedy Shows', description: '560+ Events', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80', gradient: 'from-pink-500/90 to-fuchsia-600/90' },
+    { id: 9, title: 'Workshops', description: '1,340+ Events', image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80', gradient: 'from-indigo-500/90 to-purple-600/90' },
+    { id: 10, title: 'Festivals', description: '2,200+ Events', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', gradient: 'from-violet-500/90 to-purple-600/90' },
     { id: 12, title: 'Dance Performances', description: '890+ Events', image: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&q=80', gradient: 'from-fuchsia-500/90 to-pink-600/90' }
 ];
 
@@ -107,35 +94,119 @@ function populateTrending() {
     const grid = document.getElementById('trendingGrid');
     if (!grid) return;
     
-    eventCategories.slice(0, 4).forEach((category, idx) => {
-        const card = document.createElement('div');
-        card.className = 'trending-card';
-        card.style.animationDelay = `${idx * 0.15}s`;
-        card.innerHTML = `
-            <img src="${category.image}" alt="${category.title}" class="category-card-image">
-            <div class="category-card-overlay"></div>
-            <div class="category-card-content">
-                <div class="trending-badge">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Trending</span>
+    // Create 5 custom trending cards
+    for (let idx = 0; idx < 5; idx++) {
+        if (idx === 0) {
+            // First card: X with hype title
+            const card = document.createElement('div');
+            card.className = 'trending-card';
+            card.style.animationDelay = `${idx * 0.15}s`;
+            card.innerHTML = `
+                <img src="https://admin.itsnicethat.com/images/xBxHBVODfdmcVk-SdcazyGBECiY=/243517/format-webp%7Cwidth-1440/twitter-x-logo-graphic-design-itsnicethat-02.jpeg" alt="X" class="category-card-image">
+                <div class="category-card-overlay"></div>
+                <div class="category-card-content">
+                    <div class="trending-badge">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Trending</span>
+                    </div>
+                    <h3 class="category-card-title">X<br><span style="font-size: 0.85em; font-weight: 400;">Where brands become legends</span></h3>
                 </div>
-                <h3 class="category-card-title">${category.title}</h3>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
+            `;
+            grid.appendChild(card);
+        } else if (idx === 1) {
+            // Second card: Facebook with hype title
+            const card = document.createElement('div');
+            card.className = 'trending-card';
+            card.style.animationDelay = `${idx * 0.15}s`;
+            card.innerHTML = `
+                <img src="https://static0.makeuseofimages.com/wordpress/wp-content/uploads/2024/07/a-person-using-facebook-on-a-laptop.jpg?&fit=crop&w=1600&h=900" alt="Facebook" class="category-card-image">
+                <div class="category-card-overlay"></div>
+                <div class="category-card-content">
+                    <div class="trending-badge">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Trending</span>
+                    </div>
+                    <h3 class="category-card-title">Facebook<br><span style="font-size: 0.85em; font-weight: 400;">Privacy first, always</span></h3>
+                </div>
+            `;
+            grid.appendChild(card);
+        } else if (idx === 2) {
+            // Third card: Instagram with hype title
+            const card = document.createElement('div');
+            card.className = 'trending-card';
+            card.style.animationDelay = `${idx * 0.15}s`;
+            card.innerHTML = `
+                <img src="https://9to5mac.com/wp-content/uploads/sites/6/2023/01/instagram.jpg?quality=82&strip=all&w=1600" alt="Instagram" class="category-card-image">
+                <div class="category-card-overlay"></div>
+                <div class="category-card-content">
+                    <div class="trending-badge">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Trending</span>
+                    </div>
+                    <h3 class="category-card-title">Instagram<br><span style="font-size: 0.85em; font-weight: 400;">Share your story, share your world</span></h3>
+                </div>
+            `;
+            grid.appendChild(card);
+        } else if (idx === 3) {
+            // Fourth card: LinkedIn with hype title
+            const card = document.createElement('div');
+            card.className = 'trending-card';
+            card.style.animationDelay = `${idx * 0.15}s`;
+            card.innerHTML = `
+                <img src="https://www.quickanddirtytips.com/wp-content/uploads/2023/02/shutterstock_2039117105-scaled.jpg" alt="LinkedIn" class="category-card-image">
+                <div class="category-card-overlay"></div>
+                <div class="category-card-content">
+                    <div class="trending-badge">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Trending</span>
+                    </div>
+                    <h3 class="category-card-title">LinkedIn<br><span style="font-size: 0.85em; font-weight: 400;">Connect, grow, succeed</span></h3>
+                </div>
+            `;
+            grid.appendChild(card);
+        } else if (idx === 4) {
+            // Fifth card: Reddit with hype title
+            const card = document.createElement('div');
+            card.className = 'trending-card';
+            card.style.animationDelay = `${idx * 0.15}s`;
+            card.innerHTML = `
+                <img src="https://uk.themedialeader.com/wp-content/uploads/2024/06/Reddit-2.jpg" alt="Reddit" class="category-card-image">
+                <div class="category-card-overlay"></div>
+                <div class="category-card-content">
+                    <div class="trending-badge">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Trending</span>
+                    </div>
+                    <h3 class="category-card-title">Reddit<br><span style="font-size: 0.85em; font-weight: 400;">Find your people</span></h3>
+                </div>
+            `;
+            grid.appendChild(card);
+        }
+    }
 }
 
 function setupSmoothScroll() {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
+            const href = this.getAttribute('href');
+            
+            // Fix: Skip if href is just '#' (invalid selector)
+            if (href === '#' || !href || href.length <= 1) {
+                return; // Do nothing for empty or invalid hrefs
+            }
+            
+            try {
+                const target = document.querySelector(href);
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            } catch (error) {
+                // Handle invalid CSS selector gracefully
+                console.warn(`Invalid selector for smooth scroll: ${href}`, error);
             }
         });
     });
@@ -205,16 +276,6 @@ function switchPhase(phase) {
     document.querySelectorAll('.phase-section').forEach(section => section.classList.remove('active'));
     document.getElementById(phase).classList.add('active');
     
-    // Update cursor color based on active phase
-    document.body.classList.remove('phase-1-active', 'phase-2-active', 'phase-3-active');
-    if (phase === 'phase1') {
-        document.body.classList.add('phase-1-active');
-    } else if (phase === 'phase2') {
-        document.body.classList.add('phase-2-active');
-    } else if (phase === 'phase3') {
-        document.body.classList.add('phase-3-active');
-    }
-    
     if (phase === 'phase3') {
         updateNotificationTable();
     }
@@ -231,7 +292,8 @@ async function discoverEvents() {
         return;
     }
     
-    const categories = Array.from(document.querySelectorAll('.category-checkbox input:checked'))
+    // Get selected categories from checkboxes
+    const categories = Array.from(document.querySelectorAll('.category-input:checked'))
         .map(checkbox => checkbox.value);
         
     if (categories.length === 0) {
@@ -239,7 +301,21 @@ async function discoverEvents() {
         return;
     }
     
-    showLoading(`Discovering ${maxResults} events in ${location}...`);
+    // Show progressive loading messages
+    showLoading('Searching events...');
+    
+    // Update loading message after a delay to show progress
+    setTimeout(() => {
+        if (!document.getElementById('loadingModal').classList.contains('hidden')) {
+            showLoading('Querying SerpAPI, PredictHQ, and Ticketmaster...');
+        }
+    }, 1000);
+    
+    setTimeout(() => {
+        if (!document.getElementById('loadingModal').classList.contains('hidden')) {
+            showLoading('Filtering and processing events...');
+        }
+    }, 3000);
     
     try {
         const response = await fetch(`${API_BASE_URL}/discover-events`, {
@@ -254,7 +330,28 @@ async function discoverEvents() {
             })
         });
         
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) {
+            // Try to parse error response
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            // Extract error message from structured response
+            let errorMessage = 'Failed to discover events';
+            if (errorData.detail) {
+                if (typeof errorData.detail === 'string') {
+                    errorMessage = errorData.detail;
+                } else if (errorData.detail.message) {
+                    errorMessage = errorData.detail.message;
+                } else if (errorData.detail.error) {
+                    errorMessage = `${errorData.detail.error}: ${errorData.detail.message || ''}`;
+                }
+            }
+            throw new Error(errorMessage);
+        }
         
         const result = await response.json();
         
@@ -277,24 +374,24 @@ async function discoverEvents() {
 function displayEvents(events, metadata) {
     const tableBody = document.getElementById('eventsTableBody');
     const statsElement = document.getElementById('eventsStats');
-    const subtitleElement = document.getElementById('eventsSubtitle');
-    const location = document.getElementById('location').value || 'New York';
-    const maxEvents = document.getElementById('maxEvents').value || 10;
     
-    // Update subtitle
-    if (subtitleElement) {
-        subtitleElement.textContent = `Showing ${events.length} of ${events.length} events in ${location}`;
+    // Add source to stats
+    const sourceCounts = {};
+    events.forEach(event => {
+        const source = event.source || 'unknown';
+        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+    });
+    
+    let sourceStats = '';
+    for (const [source, count] of Object.entries(sourceCounts)) {
+        sourceStats += `<span class="source-stat ${getSourceClass(source)}">${source}: ${count}</span>`;
     }
     
-    // Update status pills
-    if (statsElement) {
-        statsElement.innerHTML = `
-            <span class="status-pill status-pill-blue">Found: ${events.length}</span>
-            <span class="status-pill status-pill-purple">Limit: ${maxEvents}</span>
-        `;
-    }
-    
-    // Stats are already updated above
+    statsElement.innerHTML = `
+        <span>Found: ${metadata.total_events || 0}</span>
+        <span>Limit: ${metadata.requested_limit || 0}</span>
+        ${sourceStats}
+    `;
     
     tableBody.innerHTML = '';
     
@@ -302,21 +399,141 @@ function displayEvents(events, metadata) {
         tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No events found</td></tr>';
     } else {
         events.forEach((event, index) => {
-            const confidencePercent = Math.round((event.confidence_score || 0.5) * 100);
-            const confidenceClass = getConfidenceClass(confidencePercent);
             const source = event.source || 'unknown';
             const sourceClass = getSourceClass(source);
             
+            // Get source URL - check multiple possible fields
+            let sourceUrl = event.source_url || 
+                            (event.source_data && event.source_data.source_url) ||
+                            (event.source_data && event.source_data.link) ||
+                            (event.source_data && event.source_data.ticket_url) ||
+                            '';
+            
+            // Validate and sanitize URL
+            function isValidUrl(url) {
+                if (!url || typeof url !== 'string') return false;
+                url = url.trim();
+                if (!url || url === '#' || url.length === 0) return false;
+                
+                // Must start with http:// or https://
+                if (!url.match(/^https?:\/\//i)) {
+                    // Try to add https:// if it looks like a domain
+                    if (url.includes('.') && !url.includes(' ')) {
+                        url = 'https://' + url;
+                    } else {
+                        return false;
+                    }
+                }
+                
+                // Basic URL validation
+                try {
+                    const urlObj = new URL(url);
+                    // Must have valid domain
+                    if (!urlObj.hostname || urlObj.hostname.length < 3) {
+                        return false;
+                    }
+                    // Check for obviously invalid characters
+                    if (url.includes(' ') || url.includes('\n') || url.includes('\r')) {
+                        return false;
+                    }
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+            
+            // Prepare link icon for event name (will be shown on hover)
+            let linkIconHtml = '';
+            if (sourceUrl && isValidUrl(sourceUrl)) {
+                // HTML escape the URL for safety
+                const escapedUrl = sourceUrl
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#x27;');
+                
+                // Also escape for title attribute
+                const escapedTitle = escapedUrl;
+                
+                // Create hover icon that appears next to event name
+                linkIconHtml = `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer" class="event-link-icon" title="Open event link: ${escapedTitle}" onclick="event.stopPropagation();">
+                    <i class="fas fa-external-link-alt"></i>
+                </a>`;
+            }
+            
+            // Get category class for highlighting
+            const categoryClass = getCategoryClass(event.category || 'other');
+            
+            // Format date with icons - handle "NA" and missing dates professionally
+            function formatDate(dateStr) {
+                if (!dateStr || dateStr === 'Date not specified' || dateStr.trim() === 'NA' || dateStr.trim() === '') {
+                    return '<span style="color: #94a3b8; font-style: italic; font-size: 1rem;">NA</span>';
+                }
+                
+                let formatted = dateStr;
+                
+                // Remove spaces from date format (e.g., "12 - 27 - 25" -> "12-27-25")
+                formatted = formatted.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{2})/, '$1-$2-$3');
+                
+                // Split date and time if present
+                let datePart = formatted;
+                let timePart = '';
+                
+                // Check if there's a time (format: "12-27-25 20:00:00" or "12-27-25 • 20:00:00" or "12-27-25 8 PM" or "12-27-25 8:00 PM")
+                if (formatted.includes('•')) {
+                    const parts = formatted.split('•');
+                    datePart = parts[0].trim();
+                    timePart = parts[1].trim();
+                } else if (formatted.match(/\d{2}-\d{2}-\d{2}\s+.+/)) {
+                    // Time format: "12-27-25 20:00:00" or "12-27-25 8:00 PM" or "12-27-25 8 PM GMT" or "12-27-25 2 PM"
+                    // Match date followed by space and any time-related content (including AM/PM, GMT, timezone, etc.)
+                    const match = formatted.match(/(\d{2}-\d{2}-\d{2})\s+(.+)/);
+                    if (match) {
+                        datePart = match[1];
+                        timePart = match[2];
+                    }
+                }
+                
+                // Handle "NA" case
+                if (datePart === 'NA' || datePart.trim() === '') {
+                    return '<span style="color: #94a3b8; font-style: italic;">NA</span>';
+                }
+                
+                // Build HTML with icons - vertical layout (date on top, time below)
+                // Decreased font size slightly, no bold
+                let html = `<div style="display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; align-items: center;">
+                        <i class="fas fa-calendar-alt" style="font-size: 0.75rem; margin-right: 6px; opacity: 0.7; color: #64748b;"></i>
+                        <span style="font-size: 0.875rem; font-weight: 400; color: #475569;">${datePart}</span>
+                    </div>`;
+                if (timePart && timePart !== 'NA' && timePart.trim() !== '') {
+                    html += `<div style="display: flex; align-items: center; margin-top: 2px;">
+                        <i class="fas fa-clock" style="font-size: 0.75rem; margin-right: 6px; opacity: 0.7; color: #64748b;"></i>
+                        <span style="font-size: 0.875rem; font-weight: 400; color: #475569;">${timePart}</span>
+                    </div>`;
+                }
+                html += `</div>`;
+                
+                return html;
+            }
+            
+            const formattedDate = formatDate(event.exact_date);
+            
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td><strong>${event.event_name || 'Unknown'}</strong></td>
-                <td>${event.exact_date || 'Date not specified'}</td>
+                <td class="event-name-cell">
+                    <div class="event-name-wrapper">
+                        <strong class="event-name">${event.event_name || 'Unknown'}</strong>
+                        ${linkIconHtml}
+                    </div>
+                </td>
+                <td class="date-cell">${formattedDate}</td>
                 <td>${event.exact_venue || event.location || 'Venue not specified'}</td>
-                <td><span class="engagement-badge">${event.category || 'other'}</span></td>
+                <td><span class="engagement-badge ${categoryClass}">${event.category || 'other'}</span></td>
                 <td><span class="source-badge ${sourceClass}">${source}</span></td>
-                <td><span class="${confidenceClass}">${confidencePercent}%</span></td>
                 <td>
-                    <button class="btn-analyze" onclick="analyzeAttendees('${(event.event_name || '').replace(/'/g, "\\'")}')">
+                    <button class="btn-secondary" onclick="analyzeAttendees('${(event.event_name || '').replace(/'/g, "\\'")}')">
                         <i class="fas fa-users"></i>
                         Analyze
                     </button>
@@ -327,6 +544,78 @@ function displayEvents(events, metadata) {
     }
     
     document.getElementById('eventsResults').classList.remove('hidden');
+}
+
+async function exportEvents() {
+    try {
+        if (!currentEvents || currentEvents.length === 0) {
+            alert('No events to export. Please discover events first.');
+            return;
+        }
+        
+        // Show loading indicator
+        const exportBtn = document.querySelector('button[onclick="exportEvents()"]');
+        if (!exportBtn) {
+            alert('Export button not found');
+            return;
+        }
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+        exportBtn.disabled = true;
+        
+        // Prepare data for export
+        const exportData = {
+            events: currentEvents
+        };
+        
+        // Call export endpoint
+        const response = await fetch(`${API_BASE_URL}/export-events`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(exportData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Export failed: ${response.statusText}`);
+        }
+        
+        // Get filename from Content-Disposition header or use default
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'events_export.xlsx';
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+            if (filenameMatch) {
+                filename = filenameMatch[1];
+            }
+        }
+        
+        // Download the file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        // Reset button
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        
+        console.log(`✅ Exported ${currentEvents.length} events to ${filename}`);
+    } catch (error) {
+        console.error('❌ Export error:', error);
+        alert('Failed to export events. Please try again.');
+        const exportBtn = document.querySelector('button[onclick="exportEvents()"]');
+        if (exportBtn) {
+            exportBtn.innerHTML = '<i class="fas fa-file-excel"></i> Export to Excel';
+            exportBtn.disabled = false;
+        }
+    }
 }
 
 function getHypeClass(hypePercent) {
@@ -363,7 +652,20 @@ async function discoverAttendees() {
         return;
     }
     
-    showLoading(`Finding ${maxResults} attendees for "${eventName}"...`);
+    // Show progressive loading messages
+    showLoading('Searching attendees...');
+    
+    setTimeout(() => {
+        if (!document.getElementById('loadingModal').classList.contains('hidden')) {
+            showLoading('Querying Twitter and social media...');
+        }
+    }, 1500);
+    
+    setTimeout(() => {
+        if (!document.getElementById('loadingModal').classList.contains('hidden')) {
+            showLoading('Analyzing engagement data...');
+        }
+    }, 3000);
     
     try {
         const response = await fetch(`${API_BASE_URL}/discover-attendees`, {
@@ -445,7 +747,12 @@ function displayAttendees(attendees, metadata) {
                       (attendee.post_content || 'No content').substring(0, 60) + '...' : 
                       (attendee.post_content || 'No content')}
                 </td>
-                <td>${attendee.post_date || 'Unknown date'}</td>
+                <td class="date-cell">
+                    ${attendee.post_date ? 
+                        `<i class="fas fa-calendar-alt" style="font-size: 0.75rem; margin-right: 4px; opacity: 0.7;"></i>${attendee.post_date.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{2})/, '$1-$2-$3')}` : 
+                        '<i class="fas fa-calendar-alt" style="font-size: 0.75rem; margin-right: 4px; opacity: 0.7;"></i>Unknown date'
+                    }
+                </td>
                 <td>${attendee.location || 'N/A'}</td>
                 <td>${(attendee.followers_count || 0).toLocaleString()}</td>
                 <td>
@@ -460,6 +767,78 @@ function displayAttendees(attendees, metadata) {
     }
     
     document.getElementById('attendeesResults').classList.remove('hidden');
+}
+
+async function exportAttendees() {
+    try {
+        if (!currentAttendees || currentAttendees.length === 0) {
+            alert('No attendees to export. Please discover attendees first.');
+            return;
+        }
+        
+        // Show loading indicator
+        const exportBtn = document.querySelector('button[onclick="exportAttendees()"]');
+        if (!exportBtn) {
+            alert('Export button not found');
+            return;
+        }
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+        exportBtn.disabled = true;
+        
+        // Prepare data for export
+        const exportData = {
+            attendees: currentAttendees
+        };
+        
+        // Call export endpoint
+        const response = await fetch(`${API_BASE_URL}/export-attendees`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(exportData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Export failed: ${response.statusText}`);
+        }
+        
+        // Get filename from Content-Disposition header or use default
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'attendees_export.xlsx';
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+            if (filenameMatch) {
+                filename = filenameMatch[1];
+            }
+        }
+        
+        // Download the file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        // Reset button
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        
+        console.log(`✅ Exported ${currentAttendees.length} attendees to ${filename}`);
+    } catch (error) {
+        console.error('❌ Export error:', error);
+        alert('Failed to export attendees. Please try again.');
+        const exportBtn = document.querySelector('button[onclick="exportAttendees()"]');
+        if (exportBtn) {
+            exportBtn.innerHTML = '<i class="fas fa-file-excel"></i> Export to Excel';
+            exportBtn.disabled = false;
+        }
+    }
 }
 
 function toggleUserSelection(username) {
@@ -592,7 +971,14 @@ async function sendNotifications() {
         }
     }
     
-    showLoading(`Performing ${action} on ${notificationUsers.length} ${action === 'message' ? 'users' : 'posts'}...`);
+    // Show progressive loading messages
+    showLoading(`Sending ${action}...`);
+    
+    setTimeout(() => {
+        if (!document.getElementById('loadingModal').classList.contains('hidden')) {
+            showLoading(`Processing ${notificationUsers.length} ${action === 'message' ? 'users' : 'posts'}...`);
+        }
+    }, 1000);
     
     try {
         let endpoint;
@@ -741,9 +1127,14 @@ function getEngagementClass(engagementType) {
     }
 }
 
-function showLoading(text) {
-    document.getElementById('loadingText').textContent = text;
-    document.getElementById('loadingModal').classList.remove('hidden');
+function showLoading(text, subtext = 'Please wait while we process your request') {
+    const loadingText = document.getElementById('loadingText');
+    const loadingSubtext = document.getElementById('loadingSubtext');
+    const loadingModal = document.getElementById('loadingModal');
+    
+    if (loadingText) loadingText.textContent = text;
+    if (loadingSubtext) loadingSubtext.textContent = subtext;
+    if (loadingModal) loadingModal.classList.remove('hidden');
 }
 
 function hideLoading() {
@@ -768,6 +1159,23 @@ function getSourceClass(source) {
     if (sourceLower.includes('reddit')) return 'source-reddit';
     
     return 'source-unknown';
+}
+
+function getCategoryClass(category) {
+    // Return category-specific class for highlighting
+    const categoryLower = (category || '').toLowerCase();
+    const categoryMap = {
+        'music': 'category-music',
+        'sports': 'category-sports',
+        'tech': 'category-tech',
+        'arts': 'category-arts',
+        'theater': 'category-theater',
+        'food': 'category-food',
+        'comedy': 'category-comedy',
+        'conference': 'category-conference',
+        'family': 'category-family'
+    };
+    return categoryMap[categoryLower] || 'category-other';
 }
 
 function formatSourceName(source) {
@@ -826,71 +1234,4 @@ function displaySourceBreakdown(items, type) {
     breakdown += '</div>';
     
     return breakdown;
-}
-
-// Custom Cursor - Follows Mouse Movement
-function setupCustomCursor() {
-    const cursor = document.getElementById('customCursor');
-    if (!cursor) return;
-    
-    let mouseX = 0;
-    let mouseY = 0;
-    let cursorX = 0;
-    let cursorY = 0;
-    
-    // Track mouse position
-    document.addEventListener('mousemove', (e) => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-        cursor.classList.add('active');
-    });
-    
-    // Hide cursor when mouse leaves window
-    document.addEventListener('mouseleave', () => {
-        cursor.classList.remove('active');
-    });
-    
-    // Animate cursor to follow mouse smoothly
-    function animateCursor() {
-        const dx = mouseX - cursorX;
-        const dy = mouseY - cursorY;
-        
-        cursorX += dx * 0.1;
-        cursorY += dy * 0.1;
-        
-        cursor.style.left = cursorX + 'px';
-        cursor.style.top = cursorY + 'px';
-        
-        requestAnimationFrame(animateCursor);
-    }
-    
-    animateCursor();
-    
-    // Set initial phase color (default to phase 1)
-    if (!document.body.classList.contains('phase-1-active') && 
-        !document.body.classList.contains('phase-2-active') && 
-        !document.body.classList.contains('phase-3-active')) {
-        document.body.classList.add('phase-1-active');
-    }
-}
-
-// Parallax Background for Platform Page
-function setupParallaxBackground() {
-    const platformPage = document.getElementById('platformPage');
-    if (!platformPage) return;
-    
-    function updateParallax() {
-        const scrollY = window.scrollY || window.pageYOffset;
-        
-        // Layer 1 moves at 10% scroll speed
-        platformPage.style.setProperty('--parallax-1', `${scrollY * 0.1}px`);
-        
-        // Layer 2 moves at 15% scroll speed
-        platformPage.style.setProperty('--parallax-2', `${scrollY * 0.15}px`);
-        
-        requestAnimationFrame(updateParallax);
-    }
-    
-    // Start parallax animation
-    updateParallax();
 }

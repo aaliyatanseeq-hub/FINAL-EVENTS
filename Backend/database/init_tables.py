@@ -4,11 +4,9 @@ import os
 
 print("🚀 Initializing Event Intelligence Platform Database...")
 
-# Add parent directory (Backend/) to Python path so we can import database module
+# Add current directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)  # Backend/ directory
-if parent_dir not in sys.path:
-    sys.path.insert(0, parent_dir)
+sys.path.append(current_dir)
 
 try:
     # Import database modules
@@ -16,9 +14,14 @@ try:
     # Import models to register them with Base.metadata
     # Use absolute import when run directly, relative import when imported as module
     try:
-        from . import models  # noqa: F401 - Relative import (when imported as module)
+        from . import models  # type: ignore  # noqa: F401 - Relative import (when imported as module)
+        _ = models  # Reference to suppress "not accessed" warning
     except ImportError:
-        from database import models  # noqa: F401 - Absolute import (when run directly)
+        from database import models  # type: ignore  # noqa: F401 - Absolute import (when run directly)
+        _ = models  # Reference to suppress "not accessed" warning
+    
+    # Models are imported for side effects (registering with Base.metadata)
+    # The import is necessary even though models variable is not directly used
     
     print("🔗 Creating database tables...")
     

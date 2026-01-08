@@ -4,10 +4,15 @@ WITH POSTGRESQL DATABASE LAYER
 FIXED: Uses OAuth 1.1 for all Twitter actions (comments, retweets, likes)
 """
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
+import io
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager
@@ -49,6 +54,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Middleware to disable caching for static files during development
+class NoCacheMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        # Add no-cache headers for static files
+        if request.url.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
+app.add_middleware(NoCacheMiddleware)
 
 # Initialize engines
 event_engine = SmartEventEngine()
@@ -144,6 +162,61 @@ async def discover_events(
     try:
         print(f"🎯 EVENT REQUEST: {request.max_results} events in {request.location}")
         
+        # Import location validator
+        from services.location_validator import LocationValidator
+        validator = LocationValidator()
+        
+        # ============================================
+        # STEP 1: VALIDATE LOCATION
+        # ============================================
+        print(f"🔍 Validating location: '{request.location}'")
+        is_valid_location, normalized_location, location_error = validator.validate_location(request.location)
+        
+        if not is_valid_location:
+            error_msg = location_error or f"'{request.location}' is not a valid location. Please enter a city name (e.g., 'New York', 'London', 'Los Angeles')"
+            print(f"❌ Location validation failed: {error_msg}")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "Invalid location",
+                    "message": error_msg,
+                    "location": request.location,
+                    "suggestion": "Please enter a valid city name (e.g., 'New York', 'London', 'Los Angeles')"
+                }
+            )
+        
+        print(f"✅ Location validated: '{request.location}' → '{normalized_location}'")
+        # Use normalized location (Pydantic models are immutable, so we'll use normalized_location in the request)
+        if normalized_location:
+            # Update the request object with normalized location
+            request = request.model_copy(update={"location": normalized_location})
+        
+        # ============================================
+        # STEP 2: VALIDATE DATE RANGE
+        # ============================================
+        print(f"🔍 Validating date range: {request.start_date} to {request.end_date}")
+        is_valid_dates, date_error, start_dt, end_dt = validator.validate_date_range(
+            request.start_date, 
+            request.end_date
+        )
+        
+        if not is_valid_dates:
+            print(f"❌ Date validation failed: {date_error}")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "Invalid date range",
+                    "message": date_error,
+                    "start_date": request.start_date,
+                    "end_date": request.end_date
+                }
+            )
+        
+        if start_dt is not None and end_dt is not None:
+            print(f"✅ Date range validated: {start_dt.date()} to {end_dt.date()} ({((end_dt - start_dt).days)} days)")
+        else:
+            print(f"✅ Date range validated: {request.start_date} to {request.end_date}")
+        
         # Debug: Check crud module
         print(f"DEBUG: crud module type: {type(crud)}")
         print(f"DEBUG: crud has update_analytics: {hasattr(crud, 'update_analytics')}")
@@ -168,7 +241,7 @@ async def discover_events(
             cache_key = generate_cache_key("event_discovery", request.model_dump())
             cached_result = crud.get_cache(db, cache_key)
             
-            if cached_result:
+            if cached_result is not None:
                 print("✅ Returning cached events")
                 try:
                     crud.update_analytics(db, "api_saved")
@@ -190,84 +263,184 @@ async def discover_events(
         if request.max_results < 1:
             request.max_results = 1
 
-        # Check database for existing events
+        # ============================================
+        # STEP 3: SMART CACHING - Check for overlapping date ranges
+        # ============================================
+        cached_events = []
+        cached_event_dicts = []
         try:
-            db_events = crud.get_events_by_location_date(
+            # Get cached events that fall within the requested date range
+            # This checks for ANY events in the database that overlap with the requested range
+            cached_events = crud.get_cached_events_by_date_range(
                 db=db,
                 location=request.location,
                 start_date=request.start_date,
                 end_date=request.end_date,
-                categories=request.categories,
-                limit=request.max_results
+                categories=request.categories
             )
             
-            if len(db_events) >= request.max_results * 0.5:  # If we have at least 50% in DB
-                print(f"✅ Found {len(db_events)} events in database")
-                events = []
-                for event in db_events:
+            if cached_events:
+                print(f"✅ Found {len(cached_events)} cached events in database for date range {request.start_date} to {request.end_date}")
+                # Convert cached events to dicts
+                for event in cached_events:
                     try:
-                        event_dict = schemas.Event.model_validate(event).model_dump()
-                        events.append(event_dict)
-                    except Exception as e:
-                        print(f"⚠️ Schema conversion failed for event {event.id}: {e}")
-                        # Fallback: manual conversion
-                        events.append({
+                        # Use manual conversion to avoid schema issues
+                        # Generate event_hash for deduplication (same as engine)
+                        import hashlib
+                        import re
+                        normalized = f"{event.event_name.lower()}_{(event.exact_venue or '').lower()}_{(event.exact_date or '')[:10]}"
+                        normalized = re.sub(r'[^\w\s]', '', normalized)
+                        normalized = re.sub(r'\s+', '_', normalized)
+                        event_hash = hashlib.md5(normalized.encode()).hexdigest()[:16]
+                        
+                        event_dict = {
                             "event_name": event.event_name,
                             "exact_date": event.exact_date,
-                            "exact_venue": event.exact_venue,
+                            "exact_venue": event.exact_venue or "",
                             "location": event.location,
-                            "category": event.category,
-                            "confidence_score": event.confidence_score or 0.0,
-                            "source_url": event.source_url,
-                            "posted_by": event.posted_by,
-                            "hype_score": event.hype_score or 0.0,
-                            "source": getattr(event, 'source', 'database')
-                        })
+                            "category": event.category or "other",
+                            "source_url": event.source_url or "",
+                            "posted_by": event.posted_by or "Unknown",
+                            "hype_score": float(getattr(event, 'hype_score', 0.0) or 0.0),
+                            "source": getattr(event, 'source', 'database'),
+                            "confidence_score": float(getattr(event, 'confidence_score', 0.0) or 0.0),
+                            "event_hash": event_hash  # Add hash for deduplication
+                        }
+                        cached_event_dicts.append(event_dict)
+                    except Exception as e:
+                        print(f"⚠️ Error converting cached event {getattr(event, 'id', 'unknown')}: {e}")
+                        continue
                 
-                # Cache the result
-                try:
-                    cache_data = {
-                        "events": events,
-                        "total_events": len(events)
-                    }
-                    crud.set_cache(db, cache_key, cache_data, ttl_minutes=60)
-                except:
-                    pass
-                
-                return {
-                    "success": True,
-                    "events": events[:request.max_results],
-                    "total_events": len(events),
-                    "requested_limit": request.max_results,
-                    "source": "database"
-                }
+                # Sort cached events by hype_score (descending)
+                cached_event_dicts.sort(key=lambda x: x.get('hype_score', 0.0), reverse=True)
+                print(f"📊 Cached events ready: {len(cached_event_dicts)} events sorted by hype score")
         except Exception as e:
-            print(f"⚠️ Database query failed: {e}")
+            print(f"⚠️ Error getting cached events: {e}")
+            import traceback
+            traceback.print_exc()
         
-        # If not enough in DB, use engine
-        print("🔍 Not enough in DB, using SerpAPI...")
+        # Calculate how many more events we need
+        events_needed = max(0, request.max_results - len(cached_event_dicts))
+        
+        if events_needed == 0:
+            # We have enough cached events!
+            # But we still need to enforce 50/25/25 ratio
+            print(f"✅ Using {len(cached_event_dicts)} cached events (no API calls needed)")
+            
+            # Enforce 50/25/25 ratio on cached events
+            events_by_source = {'serpapi': [], 'predicthq': [], 'ticketmaster': []}
+            other_events = []
+            
+            for event in cached_event_dicts:
+                source = event.get('source', '').lower()
+                if source in events_by_source:
+                    events_by_source[source].append(event)
+                else:
+                    other_events.append(event)
+            
+            # Calculate target counts for 50/25/25 ratio
+            serpapi_target = int(request.max_results * 0.5)  # 50%
+            predicthq_target = int(request.max_results * 0.25)  # 25%
+            ticketmaster_target = int(request.max_results * 0.25)  # 25%
+            
+            # Adjust if rounding causes total to be less than max_results
+            total_target = serpapi_target + predicthq_target + ticketmaster_target
+            if total_target < request.max_results:
+                serpapi_target += (request.max_results - total_target)
+            
+            # Sort each source by hype_score
+            for source in events_by_source:
+                events_by_source[source].sort(key=lambda x: x.get('hype_score', 0.0), reverse=True)
+            
+            # Build final list respecting 50/25/25 ratio
+            ratio_filtered_events = []
+            ratio_filtered_events.extend(events_by_source['serpapi'][:serpapi_target])
+            ratio_filtered_events.extend(events_by_source['predicthq'][:predicthq_target])
+            ratio_filtered_events.extend(events_by_source['ticketmaster'][:ticketmaster_target])
+            
+            # Fill remaining slots if we don't have enough from all sources
+            remaining_slots = request.max_results - len(ratio_filtered_events)
+            if remaining_slots > 0:
+                # Fill from other sources first
+                ratio_filtered_events.extend(other_events[:remaining_slots])
+                remaining_slots = request.max_results - len(ratio_filtered_events)
+                
+                # Then fill from sources that have more events available
+                if remaining_slots > 0:
+                    if len(events_by_source['serpapi']) > serpapi_target:
+                        ratio_filtered_events.extend(events_by_source['serpapi'][serpapi_target:serpapi_target + remaining_slots])
+                    remaining_slots = request.max_results - len(ratio_filtered_events)
+                    
+                    if remaining_slots > 0 and len(events_by_source['predicthq']) > predicthq_target:
+                        ratio_filtered_events.extend(events_by_source['predicthq'][predicthq_target:predicthq_target + remaining_slots])
+                    remaining_slots = request.max_results - len(ratio_filtered_events)
+                    
+                    if remaining_slots > 0 and len(events_by_source['ticketmaster']) > ticketmaster_target:
+                        ratio_filtered_events.extend(events_by_source['ticketmaster'][ticketmaster_target:ticketmaster_target + remaining_slots])
+            
+            # Limit and sort
+            ratio_filtered_events = ratio_filtered_events[:request.max_results]
+            ratio_filtered_events.sort(key=lambda x: x.get('hype_score', 0.0), reverse=True)
+            
+            try:
+                crud.update_analytics(db, "api_saved")
+            except:
+                pass
+            
+            return {
+                "success": True,
+                "events": ratio_filtered_events,
+                "total_events": len(ratio_filtered_events),
+                "requested_limit": request.max_results,
+                "source": "cache",
+                "cached_count": len(cached_event_dicts),
+                "api_calls_saved": True
+            }
+        
+        # ============================================
+        # STEP 4: FETCH MISSING EVENTS FROM APIs
+        # ============================================
+        print(f"🔍 Need {events_needed} more events, fetching from APIs...")
+        print(f"📊 Using {len(cached_event_dicts)} cached events + fetching {events_needed} new events")
+        
         try:
+            # Fetch only the missing count from APIs
             engine_events = event_engine.discover_events(
-            location=request.location,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            categories=request.categories,
-            max_results=request.max_results
-        )
+                location=request.location,
+                start_date=request.start_date,
+                end_date=request.end_date,
+                categories=request.categories,
+                max_results=events_needed  # Only fetch what we need
+            )
+        except ValueError as e:
+            # Validation errors from event engine (date range, etc.)
+            print(f"❌ Event engine validation error: {e}")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "Validation error",
+                    "message": str(e)
+                }
+            )
         except Exception as e:
             print(f"❌ Event engine failed: {e}")
             import traceback
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=f"Event discovery failed: {str(e)}")
         
-        # Store events in database
+        # Import quality filter
+        from services.event_quality_filter import EventQualityFilter
+        quality_filter = EventQualityFilter()
+        
+        # Store events in database with quality filtering
         events_data = []
+        filtered_count = 0
         for event in engine_events:
             try:
                 # Convert dataclass to dict, handling datetime objects
-                # Exclude fields not in Event model
+                # Exclude fields not in Event model (but keep event_hash for deduplication)
                 event_dict = {}
-                excluded_fields = {'start_datetime', 'ticket_url', 'price_range', 'event_hash'}
+                excluded_fields = {'start_datetime', 'ticket_url', 'price_range'}  # Keep event_hash for deduplication
                 
                 for key, value in event.__dict__.items():
                     if key in excluded_fields:
@@ -276,6 +449,16 @@ async def discover_events(
                         event_dict[key] = value.isoformat()
                     elif value is None:
                         event_dict[key] = None
+                    elif key == 'location' and isinstance(value, list):
+                        # CRITICAL FIX: Convert location list to string
+                        # Bug fix: Empty list [] should not become '[]' string
+                        if value:
+                            # Non-empty list: join valid values, fallback to original location if empty result
+                            joined = ', '.join(str(v) for v in value if v)
+                            event_dict[key] = joined if joined else request.location
+                        else:
+                            # Empty list: fall back to original request location
+                            event_dict[key] = request.location
                     else:
                         event_dict[key] = value
                 
@@ -291,6 +474,43 @@ async def discover_events(
                     source_data['price_range'] = event.price_range
                 
                 event_dict['source_data'] = source_data
+                
+                # === ENTERPRISE QUALITY FILTERING ===
+                # Apply quality filter to remove noise
+                quality_result = quality_filter.filter_event(event_dict, request.location)
+                
+                # Skip events marked as noise (unless quality score is borderline)
+                if not quality_result.is_real_event:
+                    filtered_count += 1
+                    if filtered_count <= 5:  # Log first 5 filtered events
+                        print(f"      🚫 Filtered noise: {event_dict.get('event_name', 'Unknown')[:50]} - Reasons: {', '.join(quality_result.rejection_reasons[:2])}")
+                    continue  # Skip storing noise events
+                
+                # Update category with clean category if different
+                if quality_result.clean_category and quality_result.clean_category != event_dict.get('category', '').lower():
+                    event_dict['category'] = quality_result.clean_category
+                
+                # CRITICAL FIX: Check if quality columns exist BEFORE adding them
+                # This prevents database errors if migration hasn't been run
+                from database import models
+                valid_columns = {col.name for col in models.Event.__table__.columns}
+                quality_fields = {'is_real_event', 'quality_score', 'clean_category', 'rejection_reasons', 'quality_confidence'}
+                
+                # Only add quality fields if columns exist in database
+                for field in quality_fields:
+                    if field in valid_columns:
+                        if field == 'is_real_event':
+                            event_dict[field] = quality_result.is_real_event
+                        elif field == 'quality_score':
+                            event_dict[field] = quality_result.quality_score
+                        elif field == 'clean_category':
+                            event_dict[field] = quality_result.clean_category
+                        elif field == 'rejection_reasons':
+                            event_dict[field] = quality_result.rejection_reasons
+                        elif field == 'quality_confidence':
+                            event_dict[field] = quality_result.confidence
+                    # If column doesn't exist, don't add it (prevents DB errors)
+                
                 events_data.append(event_dict)
                 
                 # Store in database with proper error handling
@@ -302,22 +522,124 @@ async def discover_events(
             except Exception as e:
                 print(f"⚠️ Failed to process event: {e}")
         
-        # Cache the result
+        # ============================================
+        # STEP 5: COMBINE CACHED + NEW EVENTS & ENFORCE 50/25/25 RATIO
+        # ============================================
+        # Combine cached events with newly fetched events
+        all_events_combined = cached_event_dicts + events_data
+        
+        # Remove duplicates based on event name, date, and location
+        # Use hash-based deduplication (same as engine) for consistency
+        seen_event_keys = set()
+        seen_hashes = set()  # Also track hashes for better deduplication
+        unique_events = []
+        for event in all_events_combined:
+            # Create unique key for deduplication (name + date + location)
+            event_key = (
+                event.get('event_name', '').lower().strip(),
+                event.get('exact_date', '').strip(),
+                event.get('location', '').lower().strip()
+            )
+            
+            # Also check hash if available (from engine deduplication)
+            event_hash = event.get('event_hash') or None
+            
+            # Skip if duplicate (by key or hash)
+            is_duplicate = False
+            if event_key in seen_event_keys:
+                is_duplicate = True
+            elif event_hash and event_hash in seen_hashes:
+                is_duplicate = True
+            
+            if not is_duplicate and event_key[0]:  # Skip empty names
+                seen_event_keys.add(event_key)
+                if event_hash:
+                    seen_hashes.add(event_hash)
+                unique_events.append(event)
+        
+        # ============================================
+        # STEP 6: ENFORCE 50/25/25 RATIO ON FINAL EVENTS
+        # ============================================
+        # Group events by source to enforce ratio
+        events_by_source = {'serpapi': [], 'predicthq': [], 'ticketmaster': []}
+        other_events = []
+        
+        for event in unique_events:
+            source = event.get('source', '').lower()
+            if source in events_by_source:
+                events_by_source[source].append(event)
+            else:
+                other_events.append(event)
+        
+        # Calculate target counts for 50/25/25 ratio
+        serpapi_target = int(request.max_results * 0.5)  # 50%
+        predicthq_target = int(request.max_results * 0.25)  # 25%
+        ticketmaster_target = int(request.max_results * 0.25)  # 25%
+        
+        # Adjust if rounding causes total to be less than max_results
+        total_target = serpapi_target + predicthq_target + ticketmaster_target
+        if total_target < request.max_results:
+            serpapi_target += (request.max_results - total_target)
+        
+        # Sort each source by hype_score
+        for source in events_by_source:
+            events_by_source[source].sort(key=lambda x: x.get('hype_score', 0.0), reverse=True)
+        
+        # Build final list respecting 50/25/25 ratio
+        final_events = []
+        final_events.extend(events_by_source['serpapi'][:serpapi_target])
+        final_events.extend(events_by_source['predicthq'][:predicthq_target])
+        final_events.extend(events_by_source['ticketmaster'][:ticketmaster_target])
+        
+        # Fill remaining slots if we don't have enough from all sources
+        remaining_slots = request.max_results - len(final_events)
+        if remaining_slots > 0:
+            # Fill from other sources first
+            final_events.extend(other_events[:remaining_slots])
+            remaining_slots = request.max_results - len(final_events)
+            
+            # Then fill from sources that have more events available
+            if remaining_slots > 0:
+                # Prioritize sources that haven't met their target
+                if len(events_by_source['serpapi']) > serpapi_target:
+                    final_events.extend(events_by_source['serpapi'][serpapi_target:serpapi_target + remaining_slots])
+                remaining_slots = request.max_results - len(final_events)
+                
+                if remaining_slots > 0 and len(events_by_source['predicthq']) > predicthq_target:
+                    final_events.extend(events_by_source['predicthq'][predicthq_target:predicthq_target + remaining_slots])
+                remaining_slots = request.max_results - len(final_events)
+                
+                if remaining_slots > 0 and len(events_by_source['ticketmaster']) > ticketmaster_target:
+                    final_events.extend(events_by_source['ticketmaster'][ticketmaster_target:ticketmaster_target + remaining_slots])
+        
+        # Limit to max_results and re-sort by hype_score
+        final_events = final_events[:request.max_results]
+        final_events.sort(key=lambda x: x.get('hype_score', 0.0), reverse=True)
+        
+        print(f"📊 Final result: {len(cached_event_dicts)} cached + {len(events_data)} new = {len(unique_events)} total (returning {len(final_events)})")
+        
+        # Cache the combined result
         try:
             cache_data = {
-                "events": events_data,
-                "total_events": len(events_data)
+                "events": final_events,
+                "total_events": len(final_events),
+                "cached_count": len(cached_event_dicts),
+                "new_count": len(events_data)
             }
-            crud.set_cache(db, cache_key, cache_data, ttl_minutes=60)
+            # Cache for 3 months (90 days = 129,600 minutes)
+            crud.set_cache(db, cache_key, cache_data, ttl_minutes=129600)
         except Exception as e:
             print(f"⚠️ Cache storage failed: {e}")
 
         return {
             "success": True,
-            "events": events_data,
-            "total_events": len(events_data),
+            "events": final_events,
+            "total_events": len(final_events),
             "requested_limit": request.max_results,
-            "source": "api"
+            "source": "combined",
+            "cached_count": len(cached_event_dicts),
+            "new_count": len(events_data),
+            "api_calls_saved": len(cached_event_dicts) > 0
         }
 
     except HTTPException:
@@ -349,7 +671,7 @@ async def discover_attendees(
             cache_key = generate_cache_key("attendee_discovery", request.model_dump())
             cached_result = crud.get_cache(db, cache_key)
             
-            if cached_result:
+            if cached_result is not None:
                 print("✅ Returning cached attendees")
                 try:
                     crud.update_analytics(db, "api_saved")
@@ -406,9 +728,8 @@ async def discover_attendees(
                             "display_name": attendee.display_name,
                             "bio": attendee.bio,
                             "location": location_value,  # Always a string
-                            "followers_count": int(attendee.followers_count) if attendee.followers_count else 0,
+                            "followers_count": int(getattr(attendee, 'followers_count', 0) or 0),
                             "verified": attendee.verified or False,
-                            "confidence_score": attendee.confidence_score or 0.0,
                             "engagement_type": attendee.engagement_type,
                             "post_content": attendee.post_content,
                             "post_date": attendee.post_date,
@@ -425,7 +746,8 @@ async def discover_attendees(
                         "attendees": attendees,
                         "total_attendees": len(attendees)
                     }
-                    crud.set_cache(db, cache_key, cache_data, ttl_minutes=30)
+                    # Cache for 3 months (90 days = 129,600 minutes)
+                    crud.set_cache(db, cache_key, cache_data, ttl_minutes=129600)
                 except:
                     pass
                 
@@ -1052,7 +1374,7 @@ async def send_messages(
                 action_data = schemas.UserActionCreate(
                     action_type="direct_message",
                     target_username=username,
-                    target_tweet_id=None,
+                    target_tweet_id="",  # DMs don't have tweet IDs
                     status="success" if result.get('success') else "failed",
                     message=f"Sent DM to {username}",
                     additional_data={"message": request.message[:100], "user_id": user_id}
@@ -1113,6 +1435,8 @@ async def lookup_user_id_from_username(username: str) -> Optional[str]:
         
         # Use v2 API to get user by username
         try:
+            if twitter_client.client_v2 is None:
+                return None
             user = twitter_client.client_v2.get_user(username=clean_username)
             if user and user.data:
                 return str(user.data.id)
@@ -1250,6 +1574,184 @@ def extract_tweet_id(post_link: str) -> Optional[str]:
     except Exception:
         return None
 
+# Excel Export Endpoints
+@app.post("/api/export-events")
+async def export_events(events_data: Dict[str, Any]):
+    """Export events to Excel file"""
+    try:
+        events = events_data.get("events", [])
+        if not events:
+            raise HTTPException(status_code=400, detail="No events to export")
+        
+        # Create workbook and worksheet
+        wb = Workbook()
+        ws = wb.active
+        if ws is None:
+            raise HTTPException(status_code=500, detail="Failed to create worksheet")
+        ws.title = "Events"
+        
+        # Define headers
+        headers = ["Event Name", "Date", "Time", "Venue", "Location", "Category", "Source", "Hype Score", "Source URL"]
+        ws.append(headers)
+        
+        # Style header row
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        header_font = Font(bold=True, color="FFFFFF", size=11)
+        header_alignment = Alignment(horizontal="center", vertical="center")
+        
+        for cell in ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_alignment
+        
+        # Add data rows
+        for event in events:
+            # Parse date and time
+            date_str = event.get("exact_date", "")
+            date_part = ""
+            time_part = ""
+            if date_str:
+                try:
+                    # Try to split date and time
+                    if " " in date_str:
+                        parts = date_str.split(" ", 1)
+                        date_part = parts[0]
+                        if len(parts) > 1:
+                            time_part = parts[1]
+                    else:
+                        date_part = date_str
+                except:
+                    date_part = date_str
+            
+            row = [
+                event.get("event_name", ""),
+                date_part,
+                time_part,
+                event.get("exact_venue", ""),
+                event.get("location", ""),
+                event.get("category", ""),
+                event.get("source", ""),
+                event.get("hype_score", 0.0),
+                event.get("source_url", "")
+            ]
+            ws.append(row)
+        
+        # Auto-adjust column widths
+        column_widths = {
+            "A": 40,  # Event Name
+            "B": 15,  # Date
+            "C": 15,  # Time
+            "D": 30,  # Venue
+            "E": 20,  # Location
+            "F": 15,  # Category
+            "G": 12,  # Source
+            "H": 12,  # Hype Score
+            "I": 50   # Source URL
+        }
+        for col, width in column_widths.items():
+            ws.column_dimensions[col].width = width
+        
+        # Save to BytesIO
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        # Generate filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"events_export_{timestamp}.xlsx"
+        
+        return StreamingResponse(
+            io.BytesIO(output.read()),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"❌ ERROR in export_events: {e}")
+        print(error_trace)
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
+@app.post("/api/export-attendees")
+async def export_attendees(attendees_data: Dict[str, Any]):
+    """Export attendees to Excel file"""
+    try:
+        attendees = attendees_data.get("attendees", [])
+        if not attendees:
+            raise HTTPException(status_code=400, detail="No attendees to export")
+        
+        # Create workbook and worksheet
+        wb = Workbook()
+        ws = wb.active
+        if ws is None:
+            raise HTTPException(status_code=500, detail="Failed to create worksheet")
+        ws.title = "Attendees"
+        
+        # Define headers
+        headers = ["Username", "Source", "Engagement Type", "Post Content", "Post Date", "Location", "Followers", "Verified", "Post Link"]
+        ws.append(headers)
+        
+        # Style header row
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        header_font = Font(bold=True, color="FFFFFF", size=11)
+        header_alignment = Alignment(horizontal="center", vertical="center")
+        
+        for cell in ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_alignment
+        
+        # Add data rows
+        for attendee in attendees:
+            row = [
+                attendee.get("username", ""),
+                attendee.get("source", ""),
+                attendee.get("engagement_type", ""),
+                attendee.get("post_content", ""),
+                attendee.get("post_date", ""),
+                attendee.get("location", ""),
+                attendee.get("followers_count", 0),
+                "Yes" if attendee.get("verified", False) else "No",
+                attendee.get("post_link", "")
+            ]
+            ws.append(row)
+        
+        # Auto-adjust column widths
+        column_widths = {
+            "A": 20,  # Username
+            "B": 12,  # Source
+            "C": 18,  # Engagement Type
+            "D": 60,  # Post Content
+            "E": 15,  # Post Date
+            "F": 20,  # Location
+            "G": 12,  # Followers
+            "H": 10,  # Verified
+            "I": 50   # Post Link
+        }
+        for col, width in column_widths.items():
+            ws.column_dimensions[col].width = width
+        
+        # Save to BytesIO
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        # Generate filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"attendees_export_{timestamp}.xlsx"
+        
+        return StreamingResponse(
+            io.BytesIO(output.read()),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"❌ ERROR in export_attendees: {e}")
+        print(error_trace)
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
 # Serve frontend
 # -----------------------------
 # FRONTEND SETUP (FIXED)
@@ -1267,11 +1769,16 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 # 1) Serve static files (CSS, JS, images)
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
  
-# 2) Serve index.html for root
+# 2) Serve index.html for root (with no-cache headers)
 @app.get("/")
 async def serve_frontend():
     index_path = FRONTEND_DIR / "index.html"
-    return FileResponse(str(index_path))
+    response = FileResponse(str(index_path))
+    # Add no-cache headers to prevent caching
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 if __name__ == "__main__":
     print("🚀 Event Intelligence Platform Starting...")

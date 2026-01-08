@@ -270,7 +270,8 @@ def index():
         try:
             cursor.execute("SELECT * FROM events ORDER BY created_at DESC LIMIT 10")
             events = cursor.fetchall()
-            events_df = pd.DataFrame(events, columns=[desc[0] for desc in cursor.description])
+            columns = [str(desc[0]) for desc in cursor.description] if cursor.description else []
+            events_df = pd.DataFrame(events, columns=columns)  # type: ignore[arg-type]
             events_table = events_df.to_html(classes='table table-striped', index=False)
         except:
             events_table = '<div class="alert alert-warning">No events found or table does not exist</div>'
@@ -278,7 +279,8 @@ def index():
         try:
             cursor.execute("SELECT username, followers_count, verified, event_name, created_at FROM attendees ORDER BY created_at DESC LIMIT 10")
             attendees = cursor.fetchall()
-            attendees_df = pd.DataFrame(attendees, columns=[desc[0] for desc in cursor.description])
+            columns = [str(desc[0]) for desc in cursor.description] if cursor.description else []
+            attendees_df = pd.DataFrame(attendees, columns=columns)  # type: ignore[arg-type]
             attendees_table = attendees_df.to_html(classes='table table-striped', index=False)
         except:
             attendees_table = '<div class="alert alert-warning">No attendees found or table does not exist</div>'
@@ -286,7 +288,8 @@ def index():
         try:
             cursor.execute("SELECT action_type, target_username, status, created_at FROM user_actions ORDER BY created_at DESC LIMIT 10")
             actions = cursor.fetchall()
-            actions_df = pd.DataFrame(actions, columns=[desc[0] for desc in cursor.description])
+            columns = [str(desc[0]) for desc in cursor.description] if cursor.description else []
+            actions_df = pd.DataFrame(actions, columns=columns)  # type: ignore[arg-type]
             actions_table = actions_df.to_html(classes='table table-striped', index=False)
         except:
             actions_table = '<div class="alert alert-warning">No actions found or table does not exist</div>'
@@ -294,7 +297,8 @@ def index():
         try:
             cursor.execute("SELECT * FROM analytics ORDER BY date DESC LIMIT 10")
             analytics = cursor.fetchall()
-            analytics_df = pd.DataFrame(analytics, columns=[desc[0] for desc in cursor.description])
+            columns = [str(desc[0]) for desc in cursor.description] if cursor.description else []
+            analytics_df = pd.DataFrame(analytics, columns=columns)  # type: ignore[arg-type]
             analytics_table = analytics_df.to_html(classes='table table-striped', index=False)
         except:
             analytics_table = '<div class="alert alert-warning">No analytics found or table does not exist</div>'
@@ -394,10 +398,10 @@ def execute_query():
         if sql.strip().upper().startswith('SELECT'):
             # Fetch results for SELECT
             results = cursor.fetchall()
-            columns = [desc[0] for desc in cursor.description]
+            columns = [str(desc[0]) for desc in cursor.description] if cursor.description else []
             
             # Convert to DataFrame for HTML display
-            df = pd.DataFrame(results, columns=columns)
+            df = pd.DataFrame(results, columns=columns)  # type: ignore[arg-type]
             result_html = df.to_html(classes='table table-striped', index=False)
             
             # Add row count

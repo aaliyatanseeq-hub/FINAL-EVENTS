@@ -7,5 +7,5 @@ Write-Host ""
 
 # Activate venv and run dashboard
 $env:PYTHONIOENCODING="utf-8"
-cd ..
+Set-Location ..
 .\venv\Scripts\python.exe Backend\database\database_dashboard.py
