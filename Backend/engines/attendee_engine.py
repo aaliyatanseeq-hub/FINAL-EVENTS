@@ -149,7 +149,7 @@ class SmartAttendeeEngine:
         """Single efficient search and process"""
         tweets = self.twitter_client.search_recent_tweets_safe(
             query=query,
-            max_results=min(max_results, 20),  # Increased to catch more
+            max_results=min(max_results, 100),  # Increased to catch more
             tweet_fields=['author_id', 'created_at', 'text'],
             user_fields=['username', 'name', 'verified', 'description', 'location', 'public_metrics'],
             expansions=['author_id']
